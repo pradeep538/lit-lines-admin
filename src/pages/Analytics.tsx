@@ -6,8 +6,6 @@ import {
   UserOutlined,
   HeartOutlined,
   BookOutlined,
-  EyeOutlined,
-  ShareAltOutlined,
 } from '@ant-design/icons';
 import { analyticsApi } from '@/services/api';
 
@@ -19,7 +17,7 @@ const Analytics: React.FC = () => {
     queryFn: () => analyticsApi.getAnalytics(),
   });
 
-  const { data: userAnalytics, isLoading: userAnalyticsLoading } = useQuery({
+  const { data: userAnalytics } = useQuery({
     queryKey: ['user-analytics'],
     queryFn: () => analyticsApi.getUserAnalytics(),
   });

@@ -19,8 +19,7 @@ import {
   PlusOutlined, 
   SearchOutlined, 
   EditOutlined, 
-  DeleteOutlined,
-  GlobalOutlined
+  DeleteOutlined
 } from '@ant-design/icons';
 import { languagesApi } from '@/services/api';
 import type { Language, LanguageFormData } from '@/types';
@@ -57,7 +56,7 @@ const LanguageManagement: React.FC = () => {
       setEditingLanguage(null);
       form.resetFields();
     },
-    onError: (error) => {
+    onError: () => {
       message.error('Failed to create language');
     },
   });
@@ -72,7 +71,7 @@ const LanguageManagement: React.FC = () => {
       setEditingLanguage(null);
       form.resetFields();
     },
-    onError: (error) => {
+    onError: () => {
       message.error('Failed to update language');
     },
   });
@@ -84,7 +83,7 @@ const LanguageManagement: React.FC = () => {
       message.success('Language deleted successfully');
       queryClient.invalidateQueries({ queryKey: ['languages'] });
     },
-    onError: (error) => {
+    onError: () => {
       message.error('Failed to delete language');
     },
   });
@@ -140,7 +139,7 @@ const LanguageManagement: React.FC = () => {
     {
       title: 'Language',
       key: 'language',
-      render: (_, record: Language) => (
+      render: (_: any, record: Language) => (
         <Space>
           {record.flag_icon_url && (
             <img 
@@ -185,7 +184,7 @@ const LanguageManagement: React.FC = () => {
     {
       title: 'Actions',
       key: 'actions',
-      render: (_, record: Language) => (
+      render: (_: any, record: Language) => (
         <Space size="small">
           <Tooltip title="Edit">
             <Button 

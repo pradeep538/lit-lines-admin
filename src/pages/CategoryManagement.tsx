@@ -17,8 +17,7 @@ import {
   PlusOutlined, 
   SearchOutlined, 
   EditOutlined, 
-  DeleteOutlined,
-  TranslationOutlined
+  DeleteOutlined
 } from '@ant-design/icons';
 import { categoriesApi, languagesApi } from '@/services/api';
 import type { Category, CategoryFormData } from '@/types';
@@ -61,7 +60,7 @@ const CategoryManagement: React.FC = () => {
       setIsModalVisible(false);
       setEditingCategory(null);
     },
-    onError: (error) => {
+    onError: () => {
       message.error('Failed to create category');
     },
   });
@@ -75,7 +74,7 @@ const CategoryManagement: React.FC = () => {
       setIsModalVisible(false);
       setEditingCategory(null);
     },
-    onError: (error) => {
+    onError: () => {
       message.error('Failed to update category');
     },
   });
@@ -87,7 +86,7 @@ const CategoryManagement: React.FC = () => {
       message.success('Category deleted successfully');
       queryClient.invalidateQueries({ queryKey: ['categories'] });
     },
-    onError: (error) => {
+    onError: () => {
       message.error('Failed to delete category');
     },
   });
@@ -123,7 +122,7 @@ const CategoryManagement: React.FC = () => {
     {
       title: 'Category',
       key: 'category',
-      render: (_, record: Category) => (
+      render: (_: any, record: Category) => (
         <Space>
           {record.image_url && (
             <img 
@@ -168,7 +167,7 @@ const CategoryManagement: React.FC = () => {
     {
       title: 'Actions',
       key: 'actions',
-      render: (_, record: Category) => (
+      render: (_: any, record: Category) => (
         <Space size="small">
           <Tooltip title="Edit">
             <Button 
@@ -240,15 +239,11 @@ const CategoryManagement: React.FC = () => {
             allowClear
             style={{ width: 200 }}
           >
-            {languagesData?.languages?.map((lang: any) => (
-              <Option key={lang.language_id} value={lang.language_id}>
-                {lang.name}
-              </Option>
-            )) || [
+            {(languagesData?.languages || [
               { language_id: 'en', name: 'English' },
               { language_id: 'es', name: 'Spanish' },
               { language_id: 'fr', name: 'French' },
-            ].map((lang: any) => (
+            ]).map((lang: any) => (
               <Option key={lang.language_id} value={lang.language_id}>
                 {lang.name}
               </Option>
@@ -276,7 +271,7 @@ const CategoryManagement: React.FC = () => {
               setCurrentPage(page);
               setPageSize(size);
             },
-            onShowSizeChange: (current, size) => {
+            onShowSizeChange: (_: any, size: number) => {
               setCurrentPage(1);
               setPageSize(size);
             },

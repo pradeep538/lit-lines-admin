@@ -23,7 +23,7 @@ import {
   DownloadOutlined
 } from '@ant-design/icons';
 import { contentApi, categoriesApi, subcategoriesApi, languagesApi } from '@/services/api';
-import type { Content, ContentFormData } from '@/types';
+import type { Content } from '@/types';
 import ContentForm from '@/components/ContentForm';
 
 const { Option } = Select;
@@ -79,7 +79,7 @@ const ContentManagement: React.FC = () => {
       setEditingContent(null);
       form.resetFields();
     },
-    onError: (error) => {
+    onError: () => {
       message.error('Failed to update content');
     },
   });
@@ -91,7 +91,7 @@ const ContentManagement: React.FC = () => {
       message.success('Content deleted successfully');
       queryClient.invalidateQueries({ queryKey: ['content'] });
     },
-    onError: (error) => {
+    onError: () => {
       message.error('Failed to delete content');
     },
   });
@@ -205,7 +205,7 @@ const ContentManagement: React.FC = () => {
     {
       title: 'Actions',
       key: 'actions',
-      render: (_, record: Content) => (
+      render: (_: any, record: Content) => (
         <Space size="small">
           <Tooltip title="View">
             <Button 

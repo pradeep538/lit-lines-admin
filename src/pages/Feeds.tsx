@@ -7,21 +7,16 @@ import {
   Button, 
   Table, 
   Tag, 
-  Image,
   Row,
   Col,
   Statistic,
-  Divider,
-  Empty,
-  Spin
+  Empty
 } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import { 
   SearchOutlined, 
   FilterOutlined,
-  EyeOutlined,
   LikeOutlined,
-  ShareAltOutlined,
   BookOutlined
 } from '@ant-design/icons';
 import { contentApi, categoriesApi, languagesApi } from '@/services/api';
@@ -78,7 +73,7 @@ const Feeds: React.FC = () => {
   });
 
   // Get subcategories for selected category
-  const selectedCategory = categoriesData?.categories?.find((cat: Category) => cat.category_id === filters.category);
+  // const selectedCategory = categoriesData?.categories?.find((cat: Category) => cat.category_id === filters.category);
   // For now, we'll use an empty array since subcategories are embedded in content
   const subcategories: any[] = [];
 
@@ -169,7 +164,7 @@ const Feeds: React.FC = () => {
             {record.engagement?.total_saves || 0}
           </div>
           <div>
-            <ShareAltOutlined style={{ color: '#faad14', marginRight: 4 }} />
+            <BookOutlined style={{ color: '#faad14', marginRight: 4 }} />
             {record.engagement?.total_shares || 0}
           </div>
         </Space>
@@ -181,7 +176,7 @@ const Feeds: React.FC = () => {
       key: 'views',
       render: (engagement: any) => (
         <div>
-          <EyeOutlined style={{ color: '#722ed1', marginRight: 4 }} />
+          <BookOutlined style={{ color: '#722ed1', marginRight: 4 }} />
           {engagement?.view_count || 0}
         </div>
       ),
@@ -227,7 +222,7 @@ const Feeds: React.FC = () => {
               title="Active Content"
               value={activeContent}
               valueStyle={{ color: '#3f8600' }}
-              prefix={<EyeOutlined />}
+              prefix={<BookOutlined />}
             />
           </Card>
         </Col>
@@ -369,7 +364,7 @@ const Feeds: React.FC = () => {
               setCurrentPage(page);
               setPageSize(size);
             },
-            onShowSizeChange: (current, size) => {
+            onShowSizeChange: (_: any, size: number) => {
               setCurrentPage(1);
               setPageSize(size);
             },

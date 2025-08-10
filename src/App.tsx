@@ -1,7 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Layout } from 'antd';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Sidebar from '@/components/Sidebar';

@@ -17,8 +17,7 @@ import {
   PlusOutlined, 
   SearchOutlined, 
   EditOutlined, 
-  DeleteOutlined,
-  TranslationOutlined
+  DeleteOutlined
 } from '@ant-design/icons';
 import { subcategoriesApi, categoriesApi, languagesApi } from '@/services/api';
 import type { Subcategory, SubcategoryFormData } from '@/types';
@@ -66,7 +65,7 @@ const SubcategoryManagement: React.FC = () => {
       setIsModalVisible(false);
       setEditingSubcategory(null);
     },
-    onError: (error) => {
+    onError: () => {
       message.error('Failed to create subcategory');
     },
   });
@@ -80,7 +79,7 @@ const SubcategoryManagement: React.FC = () => {
       setIsModalVisible(false);
       setEditingSubcategory(null);
     },
-    onError: (error) => {
+    onError: () => {
       message.error('Failed to update subcategory');
     },
   });
@@ -92,7 +91,7 @@ const SubcategoryManagement: React.FC = () => {
       message.success('Subcategory deleted successfully');
       queryClient.invalidateQueries({ queryKey: ['subcategories'] });
     },
-    onError: (error) => {
+    onError: () => {
       message.error('Failed to delete subcategory');
     },
   });
@@ -137,7 +136,7 @@ const SubcategoryManagement: React.FC = () => {
     {
       title: 'Subcategory',
       key: 'subcategory',
-      render: (_, record: Subcategory) => (
+      render: (_: any, record: Subcategory) => (
         <Space>
           {record.image_url && (
             <img 
@@ -182,7 +181,7 @@ const SubcategoryManagement: React.FC = () => {
     {
       title: 'Actions',
       key: 'actions',
-      render: (_, record: Subcategory) => (
+      render: (_: any, record: Subcategory) => (
         <Space size="small">
           <Tooltip title="Edit">
             <Button 

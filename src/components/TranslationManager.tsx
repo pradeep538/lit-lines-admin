@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Form, Input, Select, Button, message, Space, Tag, List } from 'antd';
-import { PlusOutlined, TranslationOutlined } from '@ant-design/icons';
+import { TranslationOutlined } from '@ant-design/icons';
 import { categoriesApi, subcategoriesApi } from '@/services/api';
 
 const { Option } = Select;
@@ -11,7 +11,7 @@ interface TranslationManagerProps {
   itemId: string;
   itemName: string;
   languages: any[];
-  existingTranslations?: Record<string, { name: string; description: string }>;
+  existingTranslations?: Record<string, any>;
   onSuccess: () => void;
 }
 

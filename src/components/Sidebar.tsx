@@ -41,7 +41,7 @@ const Sidebar: React.FC = () => {
       label: 'Bulk Upload',
     },
     {
-      type: 'divider',
+      type: 'divider' as const,
     },
     {
       key: '/languages',
@@ -59,7 +59,7 @@ const Sidebar: React.FC = () => {
       label: 'Subcategories',
     },
     {
-      type: 'divider',
+      type: 'divider' as const,
     },
     {
       key: '/analytics',

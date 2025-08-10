@@ -8,8 +8,7 @@ import {
   message, 
   Progress, 
   Alert,
-  Typography,
-  Divider
+  Typography
 } from 'antd';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
@@ -22,7 +21,7 @@ import {
 import { contentApi } from '@/services/api';
 import type { Content, BulkOperationResult } from '@/types';
 
-const { Title, Paragraph } = Typography;
+const { Title } = Typography;
 const { Dragger } = Upload;
 
 const BulkUpload: React.FC = () => {
@@ -36,10 +35,10 @@ const BulkUpload: React.FC = () => {
       contentApi.uploadContent(data),
     onSuccess: (response) => {
       message.success('Bulk upload completed successfully');
-      setUploadResults(response.results || []);
+      setUploadResults(response.data?.results || []);
       queryClient.invalidateQueries({ queryKey: ['content'] });
     },
-    onError: (error) => {
+    onError: () => {
       message.error('Failed to upload content');
     },
     onSettled: () => {

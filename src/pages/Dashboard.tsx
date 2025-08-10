@@ -8,7 +8,7 @@ import {
   BookOutlined,
 } from '@ant-design/icons';
 import { analyticsApi, healthApi } from '@/services/api';
-import type { AnalyticsData } from '@/types';
+
 
 const Dashboard: React.FC = () => {
   // Health check query
@@ -20,7 +20,7 @@ const Dashboard: React.FC = () => {
     refetchOnWindowFocus: false,
   });
 
-  const { data: analytics, isLoading, error } = useQuery({
+  const { data: analytics, isLoading } = useQuery({
     queryKey: ['analytics'],
     queryFn: () => analyticsApi.getAnalytics(),
     staleTime: 30000, // 30 seconds
@@ -100,7 +100,7 @@ const Dashboard: React.FC = () => {
     },
   ];
 
-  const mockRecentContent = [];
+  const mockRecentContent: any[] = [];
 
   return (
     <div>
