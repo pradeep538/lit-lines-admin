@@ -84,7 +84,7 @@ export const useAuthStore = create<AuthState>()(
           console.log('Starting admin validation...');
           const response = await adminApi.validateAccess();
           console.log('Admin validation response:', response);
-          const isAdmin = response?.data?.isAdmin || false;
+          const isAdmin = (response as any)?.isAdmin || false;
           console.log('Setting isAdmin to:', isAdmin);
           set({ isAdmin });
           return isAdmin;
