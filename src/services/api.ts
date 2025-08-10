@@ -22,6 +22,10 @@ const api: AxiosInstance = axios.create({
   },
 });
 
+// Debug: Log the base URL being used
+console.log('API Base URL:', import.meta.env.VITE_API_BASE_URL);
+console.log('Full API URL:', (import.meta.env.VITE_API_BASE_URL || '') + '/api/v1');
+
 // Request interceptor
 api.interceptors.request.use(
   async (config) => {

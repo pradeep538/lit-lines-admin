@@ -81,12 +81,21 @@ export const useAuthStore = create<AuthState>()(
       
       validateAdminAccess: async () => {
         try {
+          console.log('Starting admin validation...');
           const response = await adminApi.validateAccess();
-          const isAdmin = response.data.isAdmin;
+          console.log('Admin validation response:', response);
+          const isAdmin = response?.data?.isAdmin || false;
+          console.log('Setting isAdmin to:', isAdmin);
           set({ isAdmin });
           return isAdmin;
-        } catch (error) {
+        } catch (error: any) {
           console.error('Failed to validate admin access:', error);
+          console.error('Error details:', {
+            message: error?.message,
+            status: error?.response?.status,
+            data: error?.response?.data,
+            config: error?.config
+          });
           set({ isAdmin: false });
           return false;
         }
