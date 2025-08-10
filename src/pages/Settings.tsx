@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, Form, Input, Button, Switch, Select, Space, Typography, Divider, Alert } from 'antd';
 import { SaveOutlined, ReloadOutlined } from '@ant-design/icons';
+import AdminManagement from '@/components/AdminManagement';
 
 const { Title, Paragraph } = Typography;
 const { Option } = Select;
@@ -24,6 +25,11 @@ const Settings: React.FC = () => {
         showIcon
         style={{ marginBottom: '24px' }}
       />
+
+      {/* Admin Management Section */}
+      <div style={{ marginBottom: '24px' }}>
+        <AdminManagement />
+      </div>
 
       <Form
         form={form}

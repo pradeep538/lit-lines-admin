@@ -7,10 +7,19 @@ import {
   HeartOutlined,
   BookOutlined,
 } from '@ant-design/icons';
-import { analyticsApi } from '@/services/api';
+import { analyticsApi, healthApi } from '@/services/api';
 import type { AnalyticsData } from '@/types';
 
 const Dashboard: React.FC = () => {
+  // Health check query
+  const { data: healthData, isLoading: healthLoading, error: healthError } = useQuery({
+    queryKey: ['health'],
+    queryFn: () => healthApi.checkHealth(),
+    staleTime: 30000, // 30 seconds
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
+
   const { data: analytics, isLoading, error } = useQuery({
     queryKey: ['analytics'],
     queryFn: () => analyticsApi.getAnalytics(),
@@ -99,18 +108,41 @@ const Dashboard: React.FC = () => {
         <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 'bold' }}>
           Dashboard
         </h1>
-        {isDemoMode && (
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          {/* Backend Health Status */}
           <div style={{ 
             padding: '8px 16px', 
-            backgroundColor: '#e6f7ff', 
-            border: '1px solid #91d5ff', 
+            backgroundColor: healthError ? '#fff2e8' : healthData ? '#f6ffed' : '#e6f7ff', 
+            border: `1px solid ${healthError ? '#ffbb96' : healthData ? '#b7eb8f' : '#91d5ff'}`, 
             borderRadius: '6px',
-            color: '#1890ff',
-            fontSize: '14px'
+            color: healthError ? '#fa8c16' : healthData ? '#52c41a' : '#1890ff',
+            fontSize: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
           }}>
-            Demo Mode - Using sample data
+            <div style={{ 
+              width: '8px', 
+              height: '8px', 
+              borderRadius: '50%', 
+              backgroundColor: healthError ? '#fa8c16' : healthData ? '#52c41a' : '#1890ff' 
+            }} />
+            {healthLoading ? 'Connecting...' : healthError ? 'Backend Offline' : healthData ? 'Backend Connected' : 'Checking...'}
           </div>
-        )}
+          
+          {isDemoMode && (
+            <div style={{ 
+              padding: '8px 16px', 
+              backgroundColor: '#e6f7ff', 
+              border: '1px solid #91d5ff', 
+              borderRadius: '6px',
+              color: '#1890ff',
+              fontSize: '14px'
+            }}>
+              Demo Mode - Using sample data
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Stats Cards */}

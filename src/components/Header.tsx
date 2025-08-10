@@ -2,10 +2,13 @@ import React from 'react';
 import { Layout, Avatar, Dropdown, Space, Badge, Button } from 'antd';
 import { BellOutlined, UserOutlined, LogoutOutlined, SettingOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
+import { useAuthStore } from '@/store/authStore';
 
 const { Header: AntHeader } = Layout;
 
 const Header: React.FC = () => {
+  const { user, logout } = useAuthStore();
+
   const userMenuItems: MenuProps['items'] = [
     {
       key: 'profile',
@@ -27,11 +30,10 @@ const Header: React.FC = () => {
     },
   ];
 
-  const handleUserMenuClick: MenuProps['onClick'] = ({ key }) => {
+  const handleUserMenuClick: MenuProps['onClick'] = async ({ key }) => {
     switch (key) {
       case 'logout':
-        // Handle logout
-        console.log('Logout clicked');
+        await logout();
         break;
       default:
         console.log('Menu item clicked:', key);
@@ -68,8 +70,13 @@ const Header: React.FC = () => {
           arrow
         >
           <Space style={{ cursor: 'pointer' }}>
-            <Avatar icon={<UserOutlined />} />
-            <span style={{ color: '#333' }}>Admin User</span>
+            <Avatar 
+              src={user?.photoURL || undefined}
+              icon={!user?.photoURL ? <UserOutlined /> : undefined}
+            />
+            <span style={{ color: '#333' }}>
+              {user?.displayName || user?.email || 'Admin User'}
+            </span>
           </Space>
         </Dropdown>
       </Space>

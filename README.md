@@ -1,14 +1,15 @@
 # 🎛️ **LitLines Admin Panel**
 
 ## 📋 **Overview**
-This directory contains the LitLines admin panel - a React-based web application for managing content, users, and analytics.
+This directory contains the LitLines admin panel - a React-based web application for managing content, users, and analytics with Firebase Google OAuth authentication and admin access control.
 
 ## 🏗️ **Technology Stack**
 - **Framework**: React 18 with TypeScript
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS
 - **UI Components**: Ant Design
-- **State Management**: React Query (@tanstack/react-query)
+- **State Management**: React Query (@tanstack/react-query) + Zustand
+- **Authentication**: Firebase Google OAuth
 - **HTTP Client**: Axios
 - **Package Manager**: npm
 
@@ -24,16 +25,23 @@ admin-panel/
 ├── 📄 postcss.config.js                      # PostCSS configuration
 ├── 📄 index.html                             # Main HTML file
 ├── 📄 README.md                              # This file
+├── 📄 env.example                            # Environment variables template
 ├── 📁 src/                                   # Source code
 │   ├── 📄 main.tsx                          # Application entry point
 │   ├── 📄 App.tsx                           # Main application component
 │   ├── 📄 index.css                         # Global styles
 │   ├── 📁 components/                       # Reusable components
+│   │   ├── 📄 Login.tsx                     # Authentication component
+│   │   ├── 📄 ProtectedRoute.tsx            # Route protection component
+│   │   └── ...                              # Other components
 │   ├── 📁 pages/                            # Page components
 │   ├── 📁 services/                         # API services
 │   ├── 📁 types/                            # TypeScript type definitions
 │   ├── 📁 hooks/                            # Custom React hooks
 │   ├── 📁 store/                            # State management
+│   │   └── 📄 authStore.ts                  # Authentication store
+│   ├── 📁 config/                           # Configuration files
+│   │   └── 📄 firebase.ts                   # Firebase configuration
 │   └── 📁 utils/                            # Utility functions
 ├── 📁 public/                               # Static assets
 ├── 📁 node_modules/                         # Dependencies (generated)
@@ -45,7 +53,26 @@ admin-panel/
 ### **Prerequisites**
 - Node.js 18 or higher
 - npm or yarn package manager
+- Firebase project with Google OAuth enabled
 - Backend server running (see backend/README.md)
+
+### **Firebase Setup**
+
+1. **Create a Firebase Project**
+   - Go to [Firebase Console](https://console.firebase.google.com/)
+   - Create a new project or select an existing one
+   - Enable Google Authentication in Authentication > Sign-in method
+
+2. **Configure Google OAuth**
+   - In Firebase Console, go to Authentication > Sign-in method
+   - Enable Google provider
+   - Add your domain to authorized domains
+
+3. **Get Firebase Configuration**
+   - Go to Project Settings > General
+   - Scroll down to "Your apps" section
+   - Click "Add app" and select Web
+   - Copy the configuration object
 
 ### **Installation**
 ```bash
@@ -57,6 +84,41 @@ npm install
 
 # Or using yarn
 yarn install
+```
+
+### **Environment Configuration**
+
+1. **Copy Environment Template**
+```bash
+cp env.example .env
+```
+
+2. **Configure Environment Variables**
+Edit `.env` file with your Firebase configuration:
+
+```bash
+# Firebase Configuration
+VITE_FIREBASE_API_KEY=your_firebase_api_key_here
+VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+
+# API Configuration
+VITE_API_BASE_URL=https://squid-app-b3fzb.ondigitalocean.app
+```
+
+### **Admin Access Configuration**
+
+To configure which email addresses can access the admin panel, edit the `ADMIN_EMAIL_WHITELIST` in `src/store/authStore.ts`:
+
+```typescript
+const ADMIN_EMAIL_WHITELIST = [
+  'pradeepmr538@gmail.com',
+  'admin@yourcompany.com',
+  // Add more admin emails here
+];
 ```
 
 ### **Running the Admin Panel**
@@ -81,27 +143,47 @@ npm run build
 npm run preview
 ```
 
+## 🔐 **Authentication Flow**
+
+1. **Access Control**: All routes are protected and require authentication
+2. **Google OAuth**: Users must sign in with Google
+3. **Email Whitelist**: Only emails in the whitelist can access the admin panel
+4. **Session Persistence**: Authentication state is persisted across browser sessions
+5. **Automatic Logout**: Users are logged out when their session expires
+
 ## 🔧 **Configuration**
 
 ### **Environment Variables**
 Create a `.env` file in the admin-panel directory:
 
 ```bash
+# Firebase Configuration
+VITE_FIREBASE_API_KEY=your_firebase_api_key_here
+VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+
 # API Configuration
-VITE_API_BASE_URL=http://localhost:8080
-VITE_API_KEY=your-admin-api-key
-
-# App Configuration
-VITE_APP_NAME=LitLines Admin
-VITE_APP_VERSION=1.0.0
-
-# Feature Flags
-VITE_ENABLE_ANALYTICS=true
-VITE_ENABLE_EXPORT=true
+VITE_API_BASE_URL=https://squid-app-b3fzb.ondigitalocean.app
 ```
 
-### **API Configuration**
-The admin panel connects to the LitLines backend API. Ensure the backend is running and accessible.
+### **Adding New Admin Users**
+
+To add new admin users:
+
+1. Edit `src/store/authStore.ts`
+2. Add the email address to `ADMIN_EMAIL_WHITELIST`
+3. The user will be able to access the admin panel after signing in with Google
+
+### **Security Considerations**
+
+- **Email Whitelist**: Only pre-approved email addresses can access the admin panel
+- **Firebase Security**: Ensure Firebase project has proper security rules
+- **Environment Variables**: Never commit `.env` files to version control
+- **HTTPS**: Always use HTTPS in production
+- **Session Management**: Implement proper session timeout and refresh mechanisms
 
 ## 📊 **Features**
 

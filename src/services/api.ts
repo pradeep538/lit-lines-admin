@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { message } from 'antd';
+import { getAuth } from 'firebase/auth';
 import type { 
   Content, 
   ApiResponse, 
@@ -14,18 +15,32 @@ import type {
 
 // Create axios instance
 const api: AxiosInstance = axios.create({
-  baseURL: '/api/v1',
-  timeout: 10000,
+  baseURL: import.meta.env.VITE_API_BASE_URL + '/api/v1',
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
-    'X-API-Key': 'test-admin-api-key', // This should come from environment
   },
 });
 
 // Request interceptor
 api.interceptors.request.use(
-  (config) => {
-    // Add loading state if needed
+  async (config) => {
+    // Add Firebase ID token to all requests
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (user) {
+        const idToken = await user.getIdToken();
+        config.headers.Authorization = `Bearer ${idToken}`;
+        console.log('Added Authorization header for user:', user.email);
+      } else {
+        // If no user is authenticated, don't add Authorization header
+        // This will result in 401 errors, which is expected for unauthenticated requests
+        console.log('No authenticated user found, skipping Authorization header');
+      }
+    } catch (error) {
+      console.warn('Failed to get Firebase ID token:', error);
+    }
     return config;
   },
   (error) => {
@@ -39,7 +54,20 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Only show error message for non-404 errors to avoid spam
+    // Handle CORS errors specifically
+    if (error.code === 'ERR_NETWORK' || error.message.includes('CORS')) {
+      console.warn('CORS error detected. This might be due to backend configuration.');
+      message.warning('Connection issue detected. Please check if the backend server is running and configured for CORS.');
+    }
+    
+    // Handle 401 errors (unauthorized) - don't show error message as this is expected for logout
+    if (error.response?.status === 401) {
+      console.log('Unauthorized request - user may be logged out');
+      // Don't show error message for 401 errors
+      return Promise.reject(error);
+    }
+    
+    // Only show error message for non-404 and non-401 errors to avoid spam
     if (error.response?.status !== 404) {
       const errorMessage = error.response?.data?.error || error.message || 'An error occurred';
       message.error(errorMessage);
@@ -274,6 +302,14 @@ export const analyticsApi = {
 export const healthApi = {
   checkHealth: async (): Promise<ApiResponse<any>> => {
     const response = await api.get('/appsmith/health');
+    return response.data;
+  },
+};
+
+// Admin validation API
+export const adminApi = {
+  validateAccess: async (): Promise<ApiResponse<any>> => {
+    const response = await api.get('/admin/validate-access');
     return response.data;
   },
 };
