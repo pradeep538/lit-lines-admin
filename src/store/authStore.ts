@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User, signOut } from 'firebase/auth';
 import { auth } from '@/config/firebase';
+import { adminApi } from '@/services/api';
 
 // Whitelist of email addresses that can access the admin panel
 const ADMIN_EMAIL_WHITELIST = [
@@ -80,14 +81,10 @@ export const useAuthStore = create<AuthState>()(
       
       validateAdminAccess: async () => {
         try {
-          // For now, just check against whitelist
-          const user = get().user;
-          if (user?.email) {
-            const isAdmin = get().checkAdminAccess(user.email);
-            set({ isAdmin });
-            return isAdmin;
-          }
-          return false;
+          const response = await adminApi.validateAccess();
+          const isAdmin = response.data.isAdmin;
+          set({ isAdmin });
+          return isAdmin;
         } catch (error) {
           console.error('Failed to validate admin access:', error);
           set({ isAdmin: false });
