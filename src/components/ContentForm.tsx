@@ -36,8 +36,16 @@ const ContentForm: React.FC<ContentFormProps> = ({
       if (!isValidSubcategory) {
         form.setFieldValue('subcategory_id', undefined);
       }
+    } else {
+      // Clear subcategory when no category is selected
+      form.setFieldValue('subcategory_id', undefined);
     }
   }, [form.getFieldValue('category_id'), subcategories, form]);
+
+  const handleCategoryChange = (categoryId: string) => {
+    // Clear subcategory when category changes
+    form.setFieldValue('subcategory_id', undefined);
+  };
 
   const handleSubmit = async () => {
     try {
@@ -77,18 +85,16 @@ const ContentForm: React.FC<ContentFormProps> = ({
           <Form.Item
             name="author"
             label="Author"
-            rules={[{ required: true, message: 'Please enter author name' }]}
           >
-            <Input placeholder="Enter author name" />
+            <Input placeholder="Enter author name (optional)" />
           </Form.Item>
         </Col>
         <Col span={12}>
           <Form.Item
             name="source"
             label="Source"
-            rules={[{ required: true, message: 'Please enter source' }]}
           >
-            <Input placeholder="Enter source (book, movie, etc.)" />
+            <Input placeholder="Enter source (book, movie, etc.) - optional" />
           </Form.Item>
         </Col>
       </Row>
@@ -143,7 +149,11 @@ const ContentForm: React.FC<ContentFormProps> = ({
             name="category_id"
             label="Category"
           >
-            <Select placeholder="Select category" allowClear>
+            <Select 
+              placeholder="Select category" 
+              allowClear
+              onChange={handleCategoryChange}
+            >
               {categories.map((category) => (
                 <Option key={category.category_id} value={category.category_id}>
                   {category.name?.en || category.name}
@@ -157,9 +167,13 @@ const ContentForm: React.FC<ContentFormProps> = ({
             name="subcategory_id"
             label="Subcategory"
           >
-            <Select placeholder="Select subcategory" allowClear>
+            <Select 
+              placeholder="Select subcategory" 
+              allowClear
+              disabled={!form.getFieldValue('category_id')}
+            >
               {subcategories
-                .filter(sub => !form.getFieldValue('category_id') || sub.category_id === form.getFieldValue('category_id'))
+                .filter(sub => form.getFieldValue('category_id') && sub.category_id === form.getFieldValue('category_id'))
                 .map((subcategory) => (
                   <Option key={subcategory.subcategory_id} value={subcategory.subcategory_id}>
                     {subcategory.name?.en || subcategory.name}

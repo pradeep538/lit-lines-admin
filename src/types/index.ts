@@ -94,8 +94,8 @@ export interface PaginatedResponse<T> {
 // Form types
 export interface ContentFormData {
   text: string;
-  author: string;
-  source: string;
+  author?: string;
+  source?: string;
   language_id: string;
   type: string;
   background_image_url: string;

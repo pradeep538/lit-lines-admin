@@ -36,11 +36,20 @@ const LanguageManagement: React.FC = () => {
   const queryClient = useQueryClient();
 
   // Queries
-  const { data: languagesData, isLoading } = useQuery({
+  const { data: languagesData, isLoading, error } = useQuery({
     queryKey: ['languages', currentPage, pageSize],
-    queryFn: () => languagesApi.getLanguages(currentPage, pageSize),
+    queryFn: () => {
+      console.log('Fetching languages with page:', currentPage, 'pageSize:', pageSize);
+      return languagesApi.getLanguages(currentPage, pageSize);
+    },
     staleTime: 30000,
     retry: 1,
+    onError: (error) => {
+      console.error('Error fetching languages:', error);
+    },
+    onSuccess: (data) => {
+      console.log('Languages fetched successfully:', data);
+    },
   });
 
   // No fallback data - use only API data
