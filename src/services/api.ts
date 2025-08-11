@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { message } from 'antd';
 import { getAuth } from 'firebase/auth';
+import { useAuthStore } from '@/store/authStore';
 import type { 
   Content, 
   ApiResponse, 
@@ -64,10 +65,13 @@ api.interceptors.response.use(
       message.warning('Connection issue detected. Please check if the backend server is running and configured for CORS.');
     }
     
-    // Handle 401 errors (unauthorized) - don't show error message as this is expected for logout
+    // Handle 401 errors (unauthorized) - trigger logout
     if (error.response?.status === 401) {
-      console.log('Unauthorized request - user may be logged out');
-      // Don't show error message for 401 errors
+      console.log('Unauthorized request - triggering logout');
+      // Trigger logout when we get a 401 error
+      const { logout } = useAuthStore.getState();
+      logout();
+      message.warning('Your session has expired. Please log in again.');
       return Promise.reject(error);
     }
     
