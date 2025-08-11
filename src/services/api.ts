@@ -65,13 +65,22 @@ api.interceptors.response.use(
       message.warning('Connection issue detected. Please check if the backend server is running and configured for CORS.');
     }
     
-    // Handle 401 errors (unauthorized) - trigger logout
+    // Handle 401 errors (unauthorized) - only trigger logout for Firebase auth errors
     if (error.response?.status === 401) {
-      console.log('Unauthorized request - triggering logout');
-      // Trigger logout when we get a 401 error
-      const { logout } = useAuthStore.getState();
-      logout();
-      message.warning('Your session has expired. Please log in again.');
+      const errorMessage = error.response?.data?.message || '';
+      const isFirebaseAuthError = errorMessage.includes('Firebase token') || 
+                                 errorMessage.includes('Invalid Firebase token') ||
+                                 errorMessage.includes('expired');
+      
+      if (isFirebaseAuthError) {
+        console.log('Firebase authentication error - triggering logout');
+        // Trigger logout only for Firebase auth errors
+        const { logout } = useAuthStore.getState();
+        logout();
+        message.warning('Your session has expired. Please log in again.');
+      } else {
+        console.log('Unauthorized request (non-Firebase) - not logging out');
+      }
       return Promise.reject(error);
     }
     

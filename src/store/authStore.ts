@@ -82,6 +82,10 @@ export const useAuthStore = create<AuthState>()(
       validateAdminAccess: async () => {
         try {
           console.log('Starting admin validation...');
+          
+          // Wait a bit for Firebase to be ready
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
           const response = await adminApi.validateAccess();
           console.log('Admin validation response:', response);
           const isAdmin = (response as any)?.isAdmin || false;
@@ -96,6 +100,14 @@ export const useAuthStore = create<AuthState>()(
             data: error?.response?.data,
             config: error?.config
           });
+          
+          // If it's a 401 error, don't set isAdmin to false immediately
+          // This might be a temporary issue with token refresh
+          if (error?.response?.status === 401) {
+            console.log('401 error during admin validation - will retry later');
+            return false;
+          }
+          
           set({ isAdmin: false });
           return false;
         }
