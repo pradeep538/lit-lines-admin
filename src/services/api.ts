@@ -34,14 +34,17 @@ api.interceptors.request.use(
     try {
       const auth = getAuth();
       const user = auth.currentUser;
+      console.log('Request interceptor - Current user:', user?.email || 'No user');
+      console.log('Request interceptor - URL:', config.url);
+      
       if (user) {
         const idToken = await user.getIdToken();
         config.headers.Authorization = `Bearer ${idToken}`;
-        console.log('Added Authorization header for user:', user.email);
+        console.log('Added Authorization header for user:', user.email, 'Token length:', idToken.length);
       } else {
         // If no user is authenticated, don't add Authorization header
         // This will result in 401 errors, which is expected for unauthenticated requests
-        console.log('No authenticated user found, skipping Authorization header');
+        console.log('No authenticated user found, skipping Authorization header for URL:', config.url);
       }
     } catch (error) {
       console.warn('Failed to get Firebase ID token:', error);
@@ -176,7 +179,7 @@ export const categoriesApi = {
     const params: any = {};
     if (page) params.page = page;
     if (limit) params.limit = limit;
-    const response = await api.get('/protected/categories', { params });
+    const response = await api.get('/appsmith/categories', { params });
     return response.data;
   },
 
