@@ -176,7 +176,7 @@ export const categoriesApi = {
     const params: any = {};
     if (page) params.page = page;
     if (limit) params.limit = limit;
-    const response = await api.get('/appsmith/categories', { params });
+    const response = await api.get('/protected/categories', { params });
     return response.data;
   },
 
@@ -226,7 +226,7 @@ export const languagesApi = {
     const params: any = {};
     if (page) params.page = page;
     if (limit) params.limit = limit;
-    const response = await api.get('/appsmith/languages', { params });
+    const response = await api.get('/languages', { params });
     return response.data;
   },
 
