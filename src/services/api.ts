@@ -68,21 +68,24 @@ api.interceptors.response.use(
       message.warning('Connection issue detected. Please check if the backend server is running and configured for CORS.');
     }
     
-    // Handle 401 errors (unauthorized) - only trigger logout for Firebase auth errors
+    // Handle 401 errors (unauthorized) - trigger logout for admin endpoints
     if (error.response?.status === 401) {
       const errorMessage = error.response?.data?.message || '';
       const isFirebaseAuthError = errorMessage.includes('Firebase token') || 
                                  errorMessage.includes('Invalid Firebase token') ||
                                  errorMessage.includes('expired');
       
-      if (isFirebaseAuthError) {
-        console.log('Firebase authentication error - triggering logout');
-        // Trigger logout only for Firebase auth errors
+      // Check if this is an admin endpoint (contains /admin/ or /appsmith/)
+      const isAdminEndpoint = error.config?.url?.includes('/admin/') || error.config?.url?.includes('/appsmith/');
+      
+      if (isFirebaseAuthError || isAdminEndpoint) {
+        console.log('Firebase authentication error or admin endpoint 401 - triggering logout');
+        // Trigger logout for Firebase auth errors or admin endpoint 401s
         const { logout } = useAuthStore.getState();
         logout();
         message.warning('Your session has expired. Please log in again.');
       } else {
-        console.log('Unauthorized request (non-Firebase) - not logging out');
+        console.log('Unauthorized request (non-Firebase, non-admin) - not logging out');
       }
       return Promise.reject(error);
     }
