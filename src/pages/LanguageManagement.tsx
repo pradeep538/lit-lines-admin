@@ -44,12 +44,6 @@ const LanguageManagement: React.FC = () => {
     },
     staleTime: 30000,
     retry: 1,
-    onError: (error) => {
-      console.error('Error fetching languages:', error);
-    },
-    onSuccess: (data) => {
-      console.log('Languages fetched successfully:', data);
-    },
   });
 
   // No fallback data - use only API data
@@ -138,7 +132,7 @@ const LanguageManagement: React.FC = () => {
     }
   };
 
-  const languages = languagesData?.languages || [];
+  const languages = (languagesData as any)?.languages || [];
   const filteredLanguages = languages.filter((lang: Language) =>
     lang.name.toLowerCase().includes(searchText.toLowerCase()) ||
     lang.native_name.toLowerCase().includes(searchText.toLowerCase())
@@ -253,13 +247,13 @@ const LanguageManagement: React.FC = () => {
       <Card>
         <Table
           columns={columns}
-          dataSource={languagesData?.languages || []}
+          dataSource={(languagesData as any)?.languages || []}
           loading={isLoading}
           rowKey="language_id"
           pagination={{
             current: currentPage,
             pageSize: pageSize,
-            total: languagesData?.total || 0,
+            total: (languagesData as any)?.total || 0,
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) => 
