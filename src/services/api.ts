@@ -62,10 +62,24 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    // Handle timeout errors specifically
+    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+      console.error('Request timeout:', error.config?.url);
+      message.error('Request timed out. Please try again or contact support if the issue persists.');
+      return Promise.reject(error);
+    }
+    
     // Handle CORS errors specifically
     if (error.code === 'ERR_NETWORK' || error.message.includes('CORS')) {
       console.warn('CORS error detected. This might be due to backend configuration.');
       message.warning('Connection issue detected. Please check if the backend server is running and configured for CORS.');
+    }
+    
+    // Handle 504 Gateway Timeout
+    if (error.response?.status === 504) {
+      console.error('Gateway timeout error:', error.config?.url);
+      message.error('Server is taking too long to respond. Please try again later or contact support.');
+      return Promise.reject(error);
     }
     
     // Handle 401 errors (unauthorized) - trigger logout for admin endpoints
@@ -163,6 +177,7 @@ export const uploadApi = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      timeout: 60000, // 60 seconds for image uploads
     });
     return response.data;
   },

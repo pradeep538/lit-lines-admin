@@ -57,11 +57,20 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       setIsUploading(false);
     },
     onError: (error: any) => {
-      const errorMessage = error.response?.data?.error || 'Failed to upload image';
-      if (errorMessage.includes('upload service is disabled')) {
-        message.warning('Image upload is not configured. Please contact administrator to set up DigitalOcean Spaces.');
+      console.error('Upload error:', error);
+      
+      // Handle specific error types
+      if (error.response?.status === 504) {
+        message.error('Upload timed out. The server is taking too long to process your image. Please try again with a smaller image or contact support.');
+      } else if (error.code === 'ECONNABORTED') {
+        message.error('Upload timed out. Please check your connection and try again.');
       } else {
-        message.error(errorMessage);
+        const errorMessage = error.response?.data?.error || 'Failed to upload image';
+        if (errorMessage.includes('upload service is disabled')) {
+          message.warning('Image upload is not configured. Please contact administrator to set up DigitalOcean Spaces.');
+        } else {
+          message.error(errorMessage);
+        }
       }
       setUploadProgress(0);
       setIsUploading(false);
@@ -99,26 +108,30 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       return false;
     }
 
-    // Check if category and subcategory are selected
-    if (!categoryId || !subcategoryId) {
-      message.error('Please select both category and subcategory before uploading');
-      return false;
-    }
-
+    // Start upload with progress simulation
     setIsUploading(true);
     setUploadProgress(0);
-
-    // Simulate upload progress
+    
+    // Simulate progress for better UX
     const progressInterval = setInterval(() => {
       setUploadProgress(prev => {
         if (prev >= 90) {
           clearInterval(progressInterval);
-          return 90;
+          return 90; // Don't go to 100% until actual completion
         }
         return prev + 10;
       });
-    }, 100);
+    }, 500);
 
+    // Check if category and subcategory are selected
+    if (!categoryId || !subcategoryId) {
+      message.error('Please select both category and subcategory before uploading');
+      setIsUploading(false);
+      setUploadProgress(0);
+      return false;
+    }
+
+    // Start upload
     uploadMutation.mutate(file, {
       onSettled: () => {
         clearInterval(progressInterval);
