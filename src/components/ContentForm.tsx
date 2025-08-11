@@ -27,11 +27,16 @@ const ContentForm: React.FC<ContentFormProps> = ({
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>(
     form.getFieldValue('category_id')
   );
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string | undefined>(
+    form.getFieldValue('subcategory_id')
+  );
 
   // Reset subcategory when category changes
   useEffect(() => {
     const categoryId = form.getFieldValue('category_id');
+    const subcategoryId = form.getFieldValue('subcategory_id');
     setSelectedCategoryId(categoryId);
+    setSelectedSubcategoryId(subcategoryId);
     
     if (categoryId) {
       // Clear subcategory if it doesn't belong to the selected category
@@ -41,17 +46,24 @@ const ContentForm: React.FC<ContentFormProps> = ({
       
       if (!isValidSubcategory) {
         form.setFieldValue('subcategory_id', undefined);
+        setSelectedSubcategoryId(undefined);
       }
     } else {
       // Clear subcategory when no category is selected
       form.setFieldValue('subcategory_id', undefined);
+      setSelectedSubcategoryId(undefined);
     }
-  }, [form.getFieldValue('category_id'), subcategories, form]);
+  }, [form.getFieldValue('category_id'), form.getFieldValue('subcategory_id'), subcategories, form]);
 
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategoryId(categoryId);
     // Clear subcategory when category changes
     form.setFieldValue('subcategory_id', undefined);
+    setSelectedSubcategoryId(undefined);
+  };
+
+  const handleSubcategoryChange = (subcategoryId: string) => {
+    setSelectedSubcategoryId(subcategoryId);
   };
 
   const handleSubmit = async () => {
@@ -178,6 +190,7 @@ const ContentForm: React.FC<ContentFormProps> = ({
               placeholder="Select subcategory" 
               allowClear
               disabled={!selectedCategoryId}
+              onChange={handleSubcategoryChange}
             >
               {subcategories
                 .filter(sub => selectedCategoryId && sub.category_id === selectedCategoryId)
@@ -199,8 +212,8 @@ const ContentForm: React.FC<ContentFormProps> = ({
             noStyle
           >
             <ImageUpload
-              categoryId={form.getFieldValue('category_id') || ''}
-              subcategoryId={form.getFieldValue('subcategory_id') || ''}
+              categoryId={selectedCategoryId || ''}
+              subcategoryId={selectedSubcategoryId || ''}
               label="Upload Background Image"
               placeholder="Upload background image for the content"
             />
@@ -213,8 +226,8 @@ const ContentForm: React.FC<ContentFormProps> = ({
             noStyle
           >
             <ImageUpload
-              categoryId={form.getFieldValue('category_id') || ''}
-              subcategoryId={form.getFieldValue('subcategory_id') || ''}
+              categoryId={selectedCategoryId || ''}
+              subcategoryId={selectedSubcategoryId || ''}
               label="Upload Shareable Image"
               placeholder="Upload shareable image for social media"
             />
