@@ -9,8 +9,8 @@ export interface BaseModel {
 export interface Content extends BaseModel {
   content_group_id: string;
   text: string;
-  author: string;
-  source: string;
+  author?: string;
+  source?: string;
   language_id: string;
   type: string;
   background_image_url: string;
