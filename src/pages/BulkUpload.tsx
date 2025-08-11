@@ -167,7 +167,7 @@ const BulkUpload: React.FC = () => {
       
       <Alert
         message="Bulk Upload Instructions"
-        description="Upload a JSON file containing an array of content objects. Each content object should include text, author, source, language_id, type, and other required fields."
+        description="Upload a JSON file containing an array of content objects. Each content object should include text, language_id, type, and other required fields. Author and source are optional."
         type="info"
         showIcon
         style={{ marginBottom: '24px' }}

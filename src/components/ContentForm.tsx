@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Form, Input, Select, Button, Row, Col, Space } from 'antd';
 import type { FormInstance } from 'antd';
 import type { ContentFormData } from '@/types';
@@ -24,9 +24,15 @@ const ContentForm: React.FC<ContentFormProps> = ({
   onSubmit,
   loading = false,
 }) => {
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>(
+    form.getFieldValue('category_id')
+  );
+
   // Reset subcategory when category changes
   useEffect(() => {
     const categoryId = form.getFieldValue('category_id');
+    setSelectedCategoryId(categoryId);
+    
     if (categoryId) {
       // Clear subcategory if it doesn't belong to the selected category
       const currentSubcategoryId = form.getFieldValue('subcategory_id');
@@ -43,6 +49,7 @@ const ContentForm: React.FC<ContentFormProps> = ({
   }, [form.getFieldValue('category_id'), subcategories, form]);
 
   const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategoryId(categoryId);
     // Clear subcategory when category changes
     form.setFieldValue('subcategory_id', undefined);
   };
@@ -170,10 +177,10 @@ const ContentForm: React.FC<ContentFormProps> = ({
             <Select 
               placeholder="Select subcategory" 
               allowClear
-              disabled={!form.getFieldValue('category_id')}
+              disabled={!selectedCategoryId}
             >
               {subcategories
-                .filter(sub => form.getFieldValue('category_id') && sub.category_id === form.getFieldValue('category_id'))
+                .filter(sub => selectedCategoryId && sub.category_id === selectedCategoryId)
                 .map((subcategory) => (
                   <Option key={subcategory.subcategory_id} value={subcategory.subcategory_id}>
                     {subcategory.name?.en || subcategory.name}
