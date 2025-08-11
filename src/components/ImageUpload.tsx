@@ -54,7 +54,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       setIsUploading(false);
     },
     onError: (error: any) => {
-      message.error(error.response?.data?.error || 'Failed to upload image');
+      const errorMessage = error.response?.data?.error || 'Failed to upload image';
+      if (errorMessage.includes('upload service is disabled')) {
+        message.warning('Image upload is not configured. Please contact administrator to set up DigitalOcean Spaces.');
+      } else {
+        message.error(errorMessage);
+      }
       setUploadProgress(0);
       setIsUploading(false);
     },
@@ -67,7 +72,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       onChange?.('');
     },
     onError: (error: any) => {
-      message.error(error.response?.data?.error || 'Failed to delete image');
+      const errorMessage = error.response?.data?.error || 'Failed to delete image';
+      if (errorMessage.includes('upload service is disabled')) {
+        message.warning('Image upload is not configured. Please contact administrator to set up DigitalOcean Spaces.');
+      } else {
+        message.error(errorMessage);
+      }
     },
   });
 
