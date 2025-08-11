@@ -45,6 +45,9 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
 
+  // Check if upload should be disabled due to missing category/subcategory
+  const isUploadDisabled = disabled || isUploading || !categoryId || !subcategoryId;
+
   const uploadMutation = useMutation({
     mutationFn: (file: File) => uploadApi.uploadImage(file, categoryId, subcategoryId),
     onSuccess: (response: UploadResponse) => {
@@ -141,8 +144,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         backgroundColor: '#fafafa',
         textAlign: 'center',
         padding: '16px',
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        opacity: disabled ? 0.6 : 1,
+        cursor: isUploadDisabled ? 'not-allowed' : 'pointer',
+        opacity: isUploadDisabled ? 0.6 : 1,
       }}
     >
       {isUploading ? (
@@ -159,7 +162,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           <div style={{ marginTop: 12 }}>
             <Text strong style={{ fontSize: 14 }}>{label}</Text>
             <br />
-            <Text type="secondary" style={{ fontSize: 12 }}>{placeholder}</Text>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              {isUploadDisabled && (!categoryId || !subcategoryId) 
+                ? 'Please select both category and subcategory to enable upload'
+                : placeholder
+              }
+            </Text>
           </div>
         </div>
       )}
@@ -211,7 +219,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             </div>
           </Card>
           
-          {!disabled && (
+          {!isUploadDisabled && (
             <Dragger
               name="file"
               accept="image/*"
@@ -229,7 +237,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           accept="image/*"
           beforeUpload={handleUpload}
           showUploadList={false}
-          disabled={disabled || isUploading}
+          disabled={isUploadDisabled}
         >
           {renderUploadArea()}
         </Dragger>
