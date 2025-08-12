@@ -83,9 +83,6 @@ export const useAuthStore = create<AuthState>()(
         try {
           console.log('Starting admin validation...');
           
-          // Wait a bit for Firebase to be ready
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
           const response = await adminApi.validateAccess();
           console.log('Admin validation response:', response);
           const isAdmin = (response as any)?.isAdmin || false;

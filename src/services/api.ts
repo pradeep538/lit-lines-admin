@@ -165,7 +165,7 @@ export const contentApi = {
 // Upload API
 export const uploadApi = {
   // Get presigned URL for direct upload
-  getUploadURL: async (filename: string, contentType: string, categoryId: string, subcategoryId: string): Promise<{upload_url: string, file_url: string}> => {
+  getUploadURL: async (filename: string, contentType: string, categoryId: string, subcategoryId: string): Promise<{upload_url: string, file_url: string, content_type: string}> => {
     console.log('Getting presigned URL for:', { filename, contentType, categoryId, subcategoryId });
     
     const response = await api.get('/appsmith/upload/url', {
@@ -194,7 +194,7 @@ export const uploadApi = {
     
     // Step 1: Get the presigned URL from backend
     console.log('Step 1: Getting presigned URL from backend...');
-    const { upload_url, file_url } = await uploadApi.getUploadURL(
+    const { upload_url, file_url, content_type } = await uploadApi.getUploadURL(
       file.name,
       file.type,
       categoryId,
@@ -210,7 +210,7 @@ export const uploadApi = {
       method: 'PUT',
       body: file,
       headers: {
-        'Content-Type': file.type,
+        'Content-Type': content_type || file.type,
       },
     });
 

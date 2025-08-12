@@ -7,6 +7,7 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/en'
 
 import App from './App.tsx'
+import AuthProvider from './components/AuthProvider.tsx'
 import './index.css'
 
 // Configure dayjs for Ant Design
@@ -34,7 +35,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         }}
       >
         <BrowserRouter>
-          <App />
+          <AuthProvider>
+            <App />
+          </AuthProvider>
         </BrowserRouter>
       </ConfigProvider>
     </QueryClientProvider>

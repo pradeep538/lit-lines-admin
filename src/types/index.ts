@@ -193,6 +193,7 @@ export interface LanguageFormData {
 export interface UploadResponse {
   message: string;
   url: string;
+  content_type?: string;
 }
 
 export interface UploadError {
