@@ -8,13 +8,15 @@ import {
   Typography,
   Card,
   Progress,
-  Spin
+  Spin,
+  Alert
 } from 'antd';
 import { 
   UploadOutlined, 
   DeleteOutlined, 
   EyeOutlined,
-  LoadingOutlined
+  LoadingOutlined,
+  InfoCircleOutlined
 } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 import { uploadApi } from '@/services/api';
@@ -44,6 +46,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 }) => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadStep, setUploadStep] = useState<'idle' | 'getting-url' | 'uploading' | 'complete'>('idle');
 
   // Check if upload should be disabled due to missing category/subcategory
   const isUploadDisabled = disabled || isUploading || !categoryId || !subcategoryId;
@@ -51,10 +54,17 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   const uploadMutation = useMutation({
     mutationFn: (file: File) => uploadApi.uploadImageDirect(file, categoryId, subcategoryId),
     onSuccess: (response: UploadResponse) => {
-      message.success('Image uploaded successfully');
+      message.success('Image uploaded successfully to DigitalOcean Spaces');
       onChange?.(response.url);
-      setUploadProgress(0);
+      setUploadProgress(100);
+      setUploadStep('complete');
       setIsUploading(false);
+      
+      // Reset progress after a short delay
+      setTimeout(() => {
+        setUploadProgress(0);
+        setUploadStep('idle');
+      }, 2000);
     },
     onError: (error: any) => {
       console.error('Upload error:', error);
@@ -64,6 +74,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         message.error('Upload timed out. The server is taking too long to process your image. Please try again with a smaller image or contact support.');
       } else if (error.code === 'ECONNABORTED') {
         message.error('Upload timed out. Please check your connection and try again.');
+      } else if (error.message?.includes('Failed to upload to DigitalOcean Spaces')) {
+        message.error('Failed to upload to DigitalOcean Spaces. Please check your connection and try again.');
       } else {
         const errorMessage = error.response?.data?.error || 'Failed to upload image';
         if (errorMessage.includes('upload service is disabled')) {
@@ -73,6 +85,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         }
       }
       setUploadProgress(0);
+      setUploadStep('idle');
       setIsUploading(false);
     },
   });
@@ -93,7 +106,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     },
   });
 
-  const handleUpload = (file: File) => {
+  const handleUpload = async (file: File) => {
     console.log('handleUpload called with:', {
       filename: file.name,
       size: file.size,
@@ -117,38 +130,110 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       return false;
     }
 
-    // Start upload with progress simulation
-    setIsUploading(true);
-    setUploadProgress(0);
-    
-    // Simulate progress for better UX
-    const progressInterval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 90) {
-          clearInterval(progressInterval);
-          return 90; // Don't go to 100% until actual completion
-        }
-        return prev + 10;
-      });
-    }, 500);
-
     // Check if category and subcategory are selected
     if (!categoryId || !subcategoryId) {
       message.error('Please select both category and subcategory before uploading');
-      setIsUploading(false);
-      setUploadProgress(0);
       return false;
     }
 
-    console.log('Starting upload with direct method...');
-    
-    // Start upload
-    uploadMutation.mutate(file, {
-      onSettled: () => {
-        clearInterval(progressInterval);
-        setUploadProgress(100);
-      },
-    });
+    // Start upload process
+    setIsUploading(true);
+    setUploadProgress(0);
+    setUploadStep('getting-url');
+
+    try {
+      // Step 1: Get presigned URL from backend
+      console.log('Step 1: Getting presigned URL from backend...');
+      setUploadStep('getting-url');
+      setUploadProgress(10);
+      
+      const { upload_url, file_url } = await uploadApi.getUploadURL(
+        file.name,
+        file.type,
+        categoryId,
+        subcategoryId
+      );
+
+      console.log('Presigned URL received:', { upload_url, file_url });
+      setUploadProgress(30);
+      setUploadStep('uploading');
+
+      // Step 2: Upload directly to DigitalOcean Spaces
+      console.log('Step 2: Uploading directly to DigitalOcean Spaces...');
+      const response = await fetch(upload_url, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to upload to DigitalOcean Spaces: ${response.statusText}`);
+      }
+
+      console.log('Upload to DigitalOcean Spaces successful');
+      setUploadProgress(90);
+
+      // Step 3: Return the file URL (backend already knows about it via the presigned URL)
+      const uploadResponse: UploadResponse = {
+        message: 'File uploaded successfully to DigitalOcean Spaces',
+        url: file_url,
+      };
+
+      // Step 4: Notify backend of upload completion
+      console.log('Step 4: Notifying backend of upload completion...');
+      setUploadProgress(95);
+      try {
+        await uploadApi.notifyUploadComplete({
+          file_url: file_url,
+          category_id: categoryId,
+          subcategory_id: subcategoryId,
+          filename: file.name,
+          content_type: file.type,
+          file_size: file.size,
+        });
+        console.log('Backend notification successful');
+      } catch (error) {
+        console.warn('Failed to notify backend of upload completion:', error);
+        // Don't fail the upload if notification fails
+      }
+
+      // Simulate the mutation success
+      message.success('Image uploaded successfully to DigitalOcean Spaces');
+      onChange?.(uploadResponse.url);
+      setUploadProgress(100);
+      setUploadStep('complete');
+      setIsUploading(false);
+      
+      // Reset progress after a short delay
+      setTimeout(() => {
+        setUploadProgress(0);
+        setUploadStep('idle');
+      }, 2000);
+
+    } catch (error: any) {
+      console.error('Upload process error:', error);
+      
+      // Handle specific error types
+      if (error.message?.includes('Failed to upload to DigitalOcean Spaces')) {
+        message.error('Failed to upload to DigitalOcean Spaces. Please check your connection and try again.');
+      } else if (error.response?.status === 504) {
+        message.error('Upload timed out. The server is taking too long to process your image. Please try again with a smaller image or contact support.');
+      } else if (error.code === 'ECONNABORTED') {
+        message.error('Upload timed out. Please check your connection and try again.');
+      } else {
+        const errorMessage = error.response?.data?.error || 'Failed to upload image';
+        if (errorMessage.includes('upload service is disabled')) {
+          message.warning('Image upload is not configured. Please contact administrator to set up DigitalOcean Spaces.');
+        } else {
+          message.error(errorMessage);
+        }
+      }
+      setUploadProgress(0);
+      setUploadStep('idle');
+      setIsUploading(false);
+    }
 
     return false; // Prevent default upload behavior
   };
@@ -156,6 +241,19 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   const handleDelete = () => {
     if (value) {
       deleteMutation.mutate(value);
+    }
+  };
+
+  const getUploadStepText = () => {
+    switch (uploadStep) {
+      case 'getting-url':
+        return 'Getting upload URL from backend...';
+      case 'uploading':
+        return 'Uploading to DigitalOcean Spaces...';
+      case 'complete':
+        return 'Upload completed successfully!';
+      default:
+        return 'Ready to upload';
     }
   };
 
@@ -176,7 +274,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         <div>
           <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
           <div style={{ marginTop: 16 }}>
-            <Text>Uploading...</Text>
+            <Text>{getUploadStepText()}</Text>
             <Progress percent={uploadProgress} size="small" />
           </div>
         </div>
@@ -200,6 +298,18 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
   return (
     <div>
+      {/* Show upload flow information */}
+      {!isUploadDisabled && !value && (
+        <Alert
+          message="Upload Flow"
+          description="After selecting category and subcategory, the system will: 1) Get upload URL from backend, 2) Upload file directly to DigitalOcean Spaces, 3) Return the file URL, 4) Notify backend of completion"
+          type="info"
+          showIcon
+          icon={<InfoCircleOutlined />}
+          style={{ marginBottom: 12 }}
+        />
+      )}
+
       {value ? (
         <Space direction="vertical" style={{ width: '100%' }}>
           <Card size="small" style={{ marginBottom: 8 }}>
@@ -218,6 +328,9 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                 </Text>
                 <Text type="secondary" style={{ fontSize: 12, wordBreak: 'break-all' }}>
                   {value.length > 60 ? `${value.substring(0, 60)}...` : value}
+                </Text>
+                <Text type="secondary" style={{ fontSize: 11, color: '#52c41a' }}>
+                  ✓ Uploaded to DigitalOcean Spaces
                 </Text>
               </div>
               <Space size="small">

@@ -166,6 +166,8 @@ export const contentApi = {
 export const uploadApi = {
   // Get presigned URL for direct upload
   getUploadURL: async (filename: string, contentType: string, categoryId: string, subcategoryId: string): Promise<{upload_url: string, file_url: string}> => {
+    console.log('Getting presigned URL for:', { filename, contentType, categoryId, subcategoryId });
+    
     const response = await api.get('/appsmith/upload/url', {
       params: {
         filename,
@@ -175,15 +177,23 @@ export const uploadApi = {
       },
       timeout: 15000, // 15 seconds for URL generation
     });
+    
+    console.log('Presigned URL response:', response.data);
     return response.data;
   },
 
   // Upload image directly to DigitalOcean Spaces
   uploadImageDirect: async (file: File, categoryId: string, subcategoryId: string): Promise<UploadResponse> => {
-    console.log('uploadImageDirect called with:', { filename: file.name, categoryId, subcategoryId });
+    console.log('uploadImageDirect called with:', { 
+      filename: file.name, 
+      size: file.size,
+      type: file.type,
+      categoryId, 
+      subcategoryId 
+    });
     
-    // First, get the presigned URL
-    console.log('Getting presigned URL...');
+    // Step 1: Get the presigned URL from backend
+    console.log('Step 1: Getting presigned URL from backend...');
     const { upload_url, file_url } = await uploadApi.getUploadURL(
       file.name,
       file.type,
@@ -191,8 +201,11 @@ export const uploadApi = {
       subcategoryId
     );
 
-    // Then upload directly to DigitalOcean Spaces
-    console.log('Uploading to DigitalOcean Spaces...', { upload_url });
+    console.log('Step 2: Uploading to DigitalOcean Spaces using presigned URL...');
+    console.log('Upload URL:', upload_url);
+    console.log('Expected file URL:', file_url);
+
+    // Step 2: Upload directly to DigitalOcean Spaces using the presigned URL
     const response = await fetch(upload_url, {
       method: 'PUT',
       body: file,
@@ -202,11 +215,19 @@ export const uploadApi = {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to upload to DigitalOcean Spaces: ${response.statusText}`);
+      console.error('DigitalOcean Spaces upload failed:', {
+        status: response.status,
+        statusText: response.statusText,
+        url: upload_url
+      });
+      throw new Error(`Failed to upload to DigitalOcean Spaces: ${response.status} ${response.statusText}`);
     }
 
+    console.log('Step 3: Upload to DigitalOcean Spaces successful');
+    console.log('Final file URL:', file_url);
+
     return {
-      message: 'File uploaded successfully',
+      message: 'File uploaded successfully to DigitalOcean Spaces',
       url: file_url,
     };
   },
@@ -234,6 +255,21 @@ export const uploadApi = {
     const response = await api.delete('/appsmith/upload/image', {
       data: { url },
     });
+    return response.data;
+  },
+
+  // Notify backend of upload completion
+  notifyUploadComplete: async (data: {
+    file_url: string;
+    category_id: string;
+    subcategory_id: string;
+    filename: string;
+    content_type: string;
+    file_size: number;
+  }): Promise<ApiResponse<any>> => {
+    console.log('Notifying backend of upload completion:', data);
+    
+    const response = await api.post('/appsmith/upload/complete', data);
     return response.data;
   },
 };
