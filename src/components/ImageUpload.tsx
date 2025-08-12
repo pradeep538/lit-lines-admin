@@ -49,7 +49,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   const isUploadDisabled = disabled || isUploading || !categoryId || !subcategoryId;
 
   const uploadMutation = useMutation({
-    mutationFn: (file: File) => uploadApi.uploadImage(file, categoryId, subcategoryId),
+    mutationFn: (file: File) => uploadApi.uploadImageDirect(file, categoryId, subcategoryId),
     onSuccess: (response: UploadResponse) => {
       message.success('Image uploaded successfully');
       onChange?.(response.url);

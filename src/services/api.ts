@@ -164,7 +164,50 @@ export const contentApi = {
 
 // Upload API
 export const uploadApi = {
-  // Upload image
+  // Get presigned URL for direct upload
+  getUploadURL: async (filename: string, contentType: string, categoryId: string, subcategoryId: string): Promise<{upload_url: string, file_url: string}> => {
+    const response = await api.get('/appsmith/upload/url', {
+      params: {
+        filename,
+        content_type: contentType,
+        category_id: categoryId,
+        subcategory_id: subcategoryId,
+      },
+      timeout: 15000, // 15 seconds for URL generation
+    });
+    return response.data;
+  },
+
+  // Upload image directly to DigitalOcean Spaces
+  uploadImageDirect: async (file: File, categoryId: string, subcategoryId: string): Promise<UploadResponse> => {
+    // First, get the presigned URL
+    const { upload_url, file_url } = await uploadApi.getUploadURL(
+      file.name,
+      file.type,
+      categoryId,
+      subcategoryId
+    );
+
+    // Then upload directly to DigitalOcean Spaces
+    const response = await fetch(upload_url, {
+      method: 'PUT',
+      body: file,
+      headers: {
+        'Content-Type': file.type,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to upload to DigitalOcean Spaces: ${response.statusText}`);
+    }
+
+    return {
+      message: 'File uploaded successfully',
+      url: file_url,
+    };
+  },
+
+  // Legacy upload method (kept for backward compatibility)
   uploadImage: async (file: File, categoryId: string, subcategoryId: string): Promise<UploadResponse> => {
     const formData = new FormData();
     formData.append('file', file);
