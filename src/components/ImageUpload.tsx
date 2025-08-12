@@ -94,6 +94,15 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   });
 
   const handleUpload = (file: File) => {
+    console.log('handleUpload called with:', {
+      filename: file.name,
+      size: file.size,
+      type: file.type,
+      categoryId,
+      subcategoryId,
+      isUploadDisabled
+    });
+
     // Validate file type
     const isImage = file.type.startsWith('image/');
     if (!isImage) {
@@ -131,6 +140,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       return false;
     }
 
+    console.log('Starting upload with direct method...');
+    
     // Start upload
     uploadMutation.mutate(file, {
       onSettled: () => {

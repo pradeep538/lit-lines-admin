@@ -180,7 +180,10 @@ export const uploadApi = {
 
   // Upload image directly to DigitalOcean Spaces
   uploadImageDirect: async (file: File, categoryId: string, subcategoryId: string): Promise<UploadResponse> => {
+    console.log('uploadImageDirect called with:', { filename: file.name, categoryId, subcategoryId });
+    
     // First, get the presigned URL
+    console.log('Getting presigned URL...');
     const { upload_url, file_url } = await uploadApi.getUploadURL(
       file.name,
       file.type,
@@ -189,6 +192,7 @@ export const uploadApi = {
     );
 
     // Then upload directly to DigitalOcean Spaces
+    console.log('Uploading to DigitalOcean Spaces...', { upload_url });
     const response = await fetch(upload_url, {
       method: 'PUT',
       body: file,
