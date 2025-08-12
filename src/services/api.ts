@@ -177,7 +177,7 @@ export const uploadApi = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-      timeout: 60000, // 60 seconds for image uploads
+      timeout: 30000, // 30 seconds for image uploads (reduced to prevent DigitalOcean timeout)
     });
     return response.data;
   },
