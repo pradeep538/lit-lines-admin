@@ -79,6 +79,21 @@ const ContentManagement: React.FC = () => {
   });
 
   // Mutations
+  const createContentMutation = useMutation({
+    mutationFn: (data: { content: Content[]; user_id: string }) => 
+      contentApi.createContent(data),
+    onSuccess: () => {
+      message.success('Content created successfully');
+      queryClient.invalidateQueries({ queryKey: ['content'] });
+      setIsModalVisible(false);
+      setEditingContent(null);
+      form.resetFields();
+    },
+    onError: () => {
+      message.error('Failed to create content');
+    },
+  });
+
   const updateContentMutation = useMutation({
     mutationFn: (data: { content: Content[]; user_id: string }) => 
       contentApi.updateContent(data),
@@ -399,9 +414,14 @@ const ContentManagement: React.FC = () => {
               user_id: 'admin-user', // This should come from auth context
             };
             
-            updateContentMutation.mutate(contentData);
+            // Use create mutation for new content, update mutation for existing content
+            if (editingContent?.id) {
+              updateContentMutation.mutate(contentData);
+            } else {
+              createContentMutation.mutate(contentData);
+            }
           }}
-          loading={updateContentMutation.isPending}
+          loading={createContentMutation.isPending || updateContentMutation.isPending}
         />
       </Modal>
     </div>

@@ -143,6 +143,12 @@ export const contentApi = {
     return response.data;
   },
 
+  // Create content
+  createContent: async (data: BulkContentRequest): Promise<ApiResponse<any>> => {
+    const response = await api.post('/appsmith/content/create', data);
+    return response.data;
+  },
+
   // Update content
   updateContent: async (data: BulkContentRequest): Promise<ApiResponse<any>> => {
     const response = await api.put('/appsmith/content/update', data);
