@@ -8,10 +8,11 @@ interface AuthProviderProps {
 }
 
 const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const { setUser, setLoading, validateAdminAccess } = useAuthStore();
+  const { setUser, setLoading, validateAdminAccess, userData, isAuthenticated, restoreAuthState } = useAuthStore();
 
   useEffect(() => {
     console.log('AuthProvider: Setting up Firebase auth state listener');
+    console.log('AuthProvider: Current persisted state:', { userData, isAuthenticated });
     
     // Set loading to true while checking auth state
     setLoading(true);
@@ -54,7 +55,15 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('AuthProvider: Cleaning up auth listener');
       unsubscribe();
     };
-  }, [setUser, setLoading, validateAdminAccess]);
+  }, [setUser, setLoading, validateAdminAccess, userData, isAuthenticated]);
+
+  // Restore authentication state from persisted data on mount
+  useEffect(() => {
+    if (userData && isAuthenticated) {
+      console.log('AuthProvider: Restoring authentication state from persisted data');
+      restoreAuthState();
+    }
+  }, [userData, isAuthenticated, restoreAuthState]);
 
   return <>{children}</>;
 };

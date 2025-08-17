@@ -7,7 +7,10 @@ import { useAuthStore } from '@/store/authStore';
 const { Header: AntHeader } = Layout;
 
 const Header: React.FC = () => {
-  const { user, logout } = useAuthStore();
+  const { user, userData, logout } = useAuthStore();
+  
+  // Use userData as fallback if user object is not available
+  const currentUser = user || userData;
 
   const userMenuItems: MenuProps['items'] = [
     {
@@ -71,11 +74,11 @@ const Header: React.FC = () => {
         >
           <Space style={{ cursor: 'pointer' }}>
             <Avatar 
-              src={user?.photoURL || undefined}
-              icon={!user?.photoURL ? <UserOutlined /> : undefined}
+              src={currentUser?.photoURL || undefined}
+              icon={!currentUser?.photoURL ? <UserOutlined /> : undefined}
             />
             <span style={{ color: '#333' }}>
-              {user?.displayName || user?.email || 'Admin User'}
+              {currentUser?.displayName || currentUser?.email || 'Admin User'}
             </span>
           </Space>
         </Dropdown>

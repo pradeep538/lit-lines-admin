@@ -8,7 +8,10 @@ import { useAuthStore } from '@/store/authStore';
 const { Title, Text } = Typography;
 
 const Login: React.FC = () => {
-  const { user, isAuthenticated, isAdmin, isLoading, error, setUser, setLoading, setError, validateAdminAccess } = useAuthStore();
+  const { user, userData, isAuthenticated, isAdmin, isLoading, error, setUser, setLoading, setError, validateAdminAccess } = useAuthStore();
+  
+  // Use userData as fallback if user object is not available
+  const currentUser = user || userData;
 
   useEffect(() => {
     // Check if user is already authenticated
@@ -96,7 +99,7 @@ const Login: React.FC = () => {
           <LockOutlined style={{ fontSize: 48, color: '#ff4d4f', marginBottom: 16 }} />
           <Title level={3}>Access Denied</Title>
           <Text type="secondary" style={{ display: 'block', marginBottom: 24 }}>
-            Your email ({user?.email}) is not authorized to access the admin panel.
+            Your email ({currentUser?.email}) is not authorized to access the admin panel.
           </Text>
           <Button type="primary" onClick={handleLogout} block>
             Sign Out

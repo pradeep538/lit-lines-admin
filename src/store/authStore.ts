@@ -11,8 +11,16 @@ const ADMIN_EMAIL_WHITELIST = [
   // Add more admin emails here
 ];
 
+interface UserData {
+  uid: string;
+  email: string;
+  displayName?: string;
+  photoURL?: string;
+}
+
 interface AuthState {
   user: User | null;
+  userData: UserData | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
   isLoading: boolean;
@@ -23,24 +31,43 @@ interface AuthState {
   logout: () => void;
   checkAdminAccess: (email: string) => boolean;
   validateAdminAccess: () => Promise<boolean>;
+  restoreAuthState: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
+      userData: null,
       isAuthenticated: false,
       isAdmin: false,
       isLoading: false,
       error: null,
       
       setUser: (user: User | null) => {
-        set({
-          user,
-          isAuthenticated: !!user,
-          isAdmin: false, // Will be validated with backend
-          error: null,
-        });
+        if (user) {
+          const userData: UserData = {
+            uid: user.uid,
+            email: user.email || '',
+            displayName: user.displayName || undefined,
+            photoURL: user.photoURL || undefined,
+          };
+          set({
+            user,
+            userData,
+            isAuthenticated: true,
+            isAdmin: false, // Will be validated with backend
+            error: null,
+          });
+        } else {
+          set({
+            user: null,
+            userData: null,
+            isAuthenticated: false,
+            isAdmin: false,
+            error: null,
+          });
+        }
       },
       
       setLoading: (loading: boolean) => {
@@ -59,6 +86,7 @@ export const useAuthStore = create<AuthState>()(
           // Clear local state
           set({
             user: null,
+            userData: null,
             isAuthenticated: false,
             isAdmin: false,
             error: null,
@@ -68,6 +96,7 @@ export const useAuthStore = create<AuthState>()(
           // Even if Firebase logout fails, clear local state
           set({
             user: null,
+            userData: null,
             isAuthenticated: false,
             isAdmin: false,
             error: null,
@@ -109,11 +138,26 @@ export const useAuthStore = create<AuthState>()(
           return false;
         }
       },
+      
+      // Method to restore authentication state from persisted data
+      restoreAuthState: async () => {
+        const state = get();
+        if (state.userData && state.isAuthenticated) {
+          console.log('Restoring auth state from persisted data:', state.userData);
+          // The Firebase auth state will be restored by the AuthProvider
+          // We just need to validate admin access
+          try {
+            await state.validateAdminAccess();
+          } catch (error) {
+            console.error('Failed to validate admin access during restore:', error);
+          }
+        }
+      },
     }),
     {
       name: 'auth-storage',
       partialize: (state) => ({
-        user: state.user,
+        userData: state.userData,
         isAuthenticated: state.isAuthenticated,
         isAdmin: state.isAdmin,
       }),
