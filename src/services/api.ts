@@ -2,6 +2,7 @@ import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { message } from 'antd';
 import { getAuth } from 'firebase/auth';
 import { useAuthStore } from '@/store/authStore';
+import { generateFilename } from '@/utils/filenameGenerator';
 import type { 
   Content, 
   ApiResponse, 
@@ -166,11 +167,16 @@ export const contentApi = {
 export const uploadApi = {
   // Get presigned URL for direct upload
   getUploadURL: async (filename: string, contentType: string, categoryId: string, subcategoryId: string): Promise<{upload_url: string, file_url: string, content_type: string}> => {
-    console.log('Getting presigned URL for:', { filename, contentType, categoryId, subcategoryId });
+    console.log('Getting presigned URL for:', { 
+      filename, 
+      contentType, 
+      categoryId, 
+      subcategoryId 
+    });
     
     const response = await api.get('/appsmith/upload/url', {
       params: {
-        filename,
+        filename, // Use the filename as provided (should already be generated)
         content_type: contentType,
         category_id: categoryId,
         subcategory_id: subcategoryId,
@@ -182,10 +188,14 @@ export const uploadApi = {
     return response.data;
   },
 
-  // Upload image directly to DigitalOcean Spaces
+    // Upload image directly to DigitalOcean Spaces
   uploadImageDirect: async (file: File, categoryId: string, subcategoryId: string): Promise<UploadResponse> => {
-    console.log('uploadImageDirect called with:', { 
-      filename: file.name, 
+    // Generate filename once to ensure consistency
+    const newFilename = generateFilename(file.name, subcategoryId);
+    
+    console.log('uploadImageDirect called with:', {
+      originalFilename: file.name,
+      newFilename,
       size: file.size,
       type: file.type,
       categoryId, 
@@ -195,7 +205,7 @@ export const uploadApi = {
     // Step 1: Get the presigned URL from backend
     console.log('Step 1: Getting presigned URL from backend...');
     const { upload_url, file_url, content_type } = await uploadApi.getUploadURL(
-      file.name,
+      newFilename, // Use the generated filename
       file.type,
       categoryId,
       subcategoryId
@@ -234,6 +244,15 @@ export const uploadApi = {
 
   // Legacy upload method (kept for backward compatibility)
   uploadImage: async (file: File, categoryId: string, subcategoryId: string): Promise<UploadResponse> => {
+    // Generate new filename with random ID and subcategory name
+    const newFilename = generateFilename(file.name, subcategoryId);
+    console.log('Upload filename transformation:', {
+      original: file.name,
+      new: newFilename,
+      categoryId,
+      subcategoryId
+    });
+    
     const formData = new FormData();
     formData.append('file', file);
     
@@ -241,6 +260,7 @@ export const uploadApi = {
       params: {
         category_id: categoryId,
         subcategory_id: subcategoryId,
+        filename: newFilename, // Pass the new filename to backend
       },
       headers: {
         'Content-Type': 'multipart/form-data',
