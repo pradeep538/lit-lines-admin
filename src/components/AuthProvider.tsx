@@ -12,7 +12,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     console.log('AuthProvider: Setting up Firebase auth state listener');
-    console.log('AuthProvider: Current persisted state:', { userData, isAuthenticated });
+    console.log('AuthProvider: Current persisted state:', { userData, isAuthenticated, isRestored });
     
     // Set loading to true while checking auth state
     setLoading(true);
@@ -59,9 +59,28 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Restore authentication state from persisted data on mount (only once)
   useEffect(() => {
+    // Only restore if we have persisted data and haven't restored yet
     if (userData && isAuthenticated && !isRestored) {
       console.log('AuthProvider: Restoring authentication state from persisted data');
-      restoreAuthState();
+      console.log('AuthProvider: User data:', userData);
+      
+      // Check if Firebase auth state matches our persisted state
+      const currentUser = auth.currentUser;
+      if (currentUser && currentUser.email === userData.email) {
+        console.log('AuthProvider: Firebase auth state matches persisted state');
+        // Firebase auth is already restored, just validate admin access
+        restoreAuthState();
+      } else {
+        console.log('AuthProvider: Firebase auth state does not match persisted state');
+        console.log('AuthProvider: Current Firebase user:', currentUser?.email);
+        console.log('AuthProvider: Persisted user:', userData.email);
+        
+        // Firebase auth state doesn't match, clear the persisted state
+        setUser(null);
+      }
+    } else if (!userData && !isAuthenticated) {
+      console.log('AuthProvider: No persisted authentication state found');
+      setLoading(false);
     }
   }, []); // Empty dependency array - only run once on mount
 

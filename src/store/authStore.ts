@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { User, signOut } from 'firebase/auth';
+import { User, signOut, getAuth } from 'firebase/auth';
 import { auth } from '@/config/firebase';
 import { adminApi } from '@/services/api';
 
@@ -60,7 +60,7 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isAdmin: false, // Will be validated with backend
             error: null,
-            isRestored: true, // Mark as restored when user is set
+            // Don't set isRestored here - let the restoration logic handle it
           });
         } else {
           set({
@@ -133,10 +133,36 @@ export const useAuthStore = create<AuthState>()(
             config: error?.config
           });
           
-          // If it's a 401 error, don't set isAdmin to false immediately
-          // This might be a temporary issue with token refresh
+          // If it's a 401 error, try to refresh the token and retry once
           if (error?.response?.status === 401) {
-            console.log('401 error during admin validation - will retry later');
+            console.log('401 error during admin validation - attempting token refresh...');
+            try {
+              // Force token refresh
+              const auth = getAuth();
+              const user = auth.currentUser;
+              if (user) {
+                await user.getIdToken(true); // Force refresh
+                console.log('Token refreshed, retrying admin validation...');
+                const retryResponse = await adminApi.validateAccess();
+                const retryIsAdmin = (retryResponse as any)?.isAdmin || false;
+                console.log('Retry admin validation response:', retryIsAdmin);
+                set({ isAdmin: retryIsAdmin });
+                return retryIsAdmin;
+              }
+            } catch (refreshError) {
+              console.error('Token refresh failed:', refreshError);
+            }
+            
+            // If refresh fails, clear the session
+            console.log('Token refresh failed, clearing session...');
+            set({
+              user: null,
+              userData: null,
+              isAuthenticated: false,
+              isAdmin: false,
+              isRestored: false,
+              error: 'Session expired. Please log in again.'
+            });
             return false;
           }
           
@@ -150,17 +176,33 @@ export const useAuthStore = create<AuthState>()(
         const state = get();
         if (state.userData && state.isAuthenticated && !state.isRestored) {
           console.log('Restoring auth state from persisted data:', state.userData);
-          // The Firebase auth state will be restored by the AuthProvider
-          // We just need to validate admin access if not already validated
-          if (!state.isAdmin) {
-            try {
+          
+          // Set loading state during restoration
+          set({ isLoading: true });
+          
+          try {
+            // Validate admin access if not already validated
+            if (!state.isAdmin) {
+              console.log('Validating admin access during restoration...');
               await state.validateAdminAccess();
-            } catch (error) {
-              console.error('Failed to validate admin access during restore:', error);
             }
+            
+            // Mark as restored to prevent multiple restorations
+            set({ isRestored: true, isLoading: false });
+            console.log('Auth state restoration completed successfully');
+          } catch (error) {
+            console.error('Failed to restore auth state:', error);
+            // If restoration fails, clear the state to force re-authentication
+            set({
+              user: null,
+              userData: null,
+              isAuthenticated: false,
+              isAdmin: false,
+              isRestored: false,
+              isLoading: false,
+              error: 'Session restoration failed. Please log in again.'
+            });
           }
-          // Mark as restored to prevent multiple restorations
-          set({ isRestored: true });
         }
       },
     }),
