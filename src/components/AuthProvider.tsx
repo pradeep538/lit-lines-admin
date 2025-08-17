@@ -64,20 +64,32 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('AuthProvider: Restoring authentication state from persisted data');
       console.log('AuthProvider: User data:', userData);
       
-      // Check if Firebase auth state matches our persisted state
-      const currentUser = auth.currentUser;
-      if (currentUser && currentUser.email === userData.email) {
-        console.log('AuthProvider: Firebase auth state matches persisted state');
-        // Firebase auth is already restored, just validate admin access
-        restoreAuthState();
-      } else {
-        console.log('AuthProvider: Firebase auth state does not match persisted state');
-        console.log('AuthProvider: Current Firebase user:', currentUser?.email);
-        console.log('AuthProvider: Persisted user:', userData.email);
+      // Wait for Firebase auth state to be restored
+      // Firebase auth state restoration can take a moment on page refresh
+      const checkFirebaseAuth = () => {
+        const currentUser = auth.currentUser;
+        console.log('AuthProvider: Checking Firebase auth state:', currentUser?.email);
         
-        // Firebase auth state doesn't match, clear the persisted state
-        setUser(null);
-      }
+        if (currentUser && currentUser.email === userData.email) {
+          console.log('AuthProvider: Firebase auth state matches persisted state');
+          // Firebase auth is restored, proceed with admin validation
+          restoreAuthState();
+        } else if (currentUser && currentUser.email !== userData.email) {
+          console.log('AuthProvider: Firebase auth state does not match persisted state');
+          console.log('AuthProvider: Current Firebase user:', currentUser.email);
+          console.log('AuthProvider: Persisted user:', userData.email);
+          
+          // Firebase auth state doesn't match, clear the persisted state
+          setUser(null);
+        } else {
+          // Firebase auth state is not yet restored, wait a bit and try again
+          console.log('AuthProvider: Firebase auth state not yet restored, waiting...');
+          setTimeout(checkFirebaseAuth, 100); // Check again in 100ms
+        }
+      };
+      
+      // Start checking Firebase auth state
+      checkFirebaseAuth();
     } else if (!userData && !isAuthenticated) {
       console.log('AuthProvider: No persisted authentication state found');
       setLoading(false);

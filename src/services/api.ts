@@ -46,6 +46,12 @@ api.interceptors.request.use(
         // If no user is authenticated, don't add Authorization header
         // This will result in 401 errors, which is expected for unauthenticated requests
         console.log('No authenticated user found, skipping Authorization header for URL:', config.url);
+        
+        // For admin endpoints, we should wait for auth to be restored
+        const isAdminEndpoint = config.url?.includes('/admin/') || config.url?.includes('/appsmith/');
+        if (isAdminEndpoint) {
+          console.log('Admin endpoint requested without auth - this might be a timing issue');
+        }
       }
     } catch (error) {
       console.warn('Failed to get Firebase ID token:', error);

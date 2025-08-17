@@ -8,16 +8,20 @@ import {
   BookOutlined,
 } from '@ant-design/icons';
 import { analyticsApi, healthApi } from '@/services/api';
+import { useAuthStore } from '@/store/authStore';
 
 
 const Dashboard: React.FC = () => {
-  // Health check query
+  const { user, isLoading: authLoading } = useAuthStore();
+
+  // Health check query - only run when user is authenticated
   const { data: healthData, isLoading: healthLoading, error: healthError } = useQuery({
     queryKey: ['health'],
     queryFn: () => healthApi.checkHealth(),
     staleTime: 30000, // 30 seconds
     retry: 1,
     refetchOnWindowFocus: false,
+    enabled: !!user, // Only run when user is authenticated
   });
 
   const { data: analytics, isLoading } = useQuery({
@@ -26,6 +30,7 @@ const Dashboard: React.FC = () => {
     staleTime: 30000, // 30 seconds
     retry: 1,
     refetchOnWindowFocus: false,
+    enabled: !!user, // Only run when user is authenticated
   });
 
   // Use fallback data when API is not available
@@ -44,6 +49,20 @@ const Dashboard: React.FC = () => {
 
   // Show demo mode indicator if API is not available
   const isDemoMode = !analytics && !isLoading;
+
+  // Show loading when auth is being restored
+  if (authLoading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '50vh' 
+      }}>
+        <div>Restoring session...</div>
+      </div>
+    );
+  }
 
   const recentContentColumns = [
     {
