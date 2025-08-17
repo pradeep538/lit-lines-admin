@@ -97,8 +97,20 @@ const ContentManagement: React.FC = () => {
   const updateContentMutation = useMutation({
     mutationFn: (data: { content: Content[]; user_id: string }) => 
       contentApi.updateContent(data),
-    onSuccess: () => {
-      message.success('Content updated successfully');
+    onSuccess: (response) => {
+      // Check if any content was created instead of updated
+      const results = response.data?.results || [];
+      const createdCount = results.filter((r: any) => r.status === 'created').length;
+      const updatedCount = results.filter((r: any) => r.status === 'success').length;
+      
+      if (createdCount > 0 && updatedCount === 0) {
+        message.success(`Content created successfully (${createdCount} items)`);
+      } else if (createdCount > 0 && updatedCount > 0) {
+        message.success(`Content updated successfully (${updatedCount} updated, ${createdCount} created)`);
+      } else {
+        message.success('Content updated successfully');
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['content'] });
       setIsModalVisible(false);
       setEditingContent(null);
