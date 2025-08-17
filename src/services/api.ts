@@ -478,4 +478,62 @@ export const adminApi = {
   },
 };
 
+// Feed Analytics API
+export const feedApi = {
+  // Get feed analytics
+  getFeedAnalytics: async (params: {
+    user_segment?: string;
+    start_date?: string;
+    end_date?: string;
+  }): Promise<ApiResponse<any>> => {
+    const response = await api.get('/admin/feed/analytics', { params });
+    return response.data;
+  },
+
+  // Get user segments
+  getUserSegments: async (): Promise<ApiResponse<any>> => {
+    const response = await api.get('/admin/feed/user-segments');
+    return response.data;
+  },
+
+  // Get feed performance
+  getFeedPerformance: async (params: {
+    user_segment?: string;
+    date_range?: string;
+  }): Promise<ApiResponse<any>> => {
+    const response = await api.get('/admin/feed/performance', { params });
+    return response.data;
+  },
+};
+
+// User Preferences API
+export const userApi = {
+  // Get user preferences
+  getUserPreferences: async (): Promise<ApiResponse<any>> => {
+    const response = await api.get('/protected/user/preferences');
+    return response.data;
+  },
+
+  // Set user preferences
+  setUserPreferences: async (preferences: any): Promise<ApiResponse<any>> => {
+    const response = await api.post('/protected/user/preferences', preferences);
+    return response.data;
+  },
+
+  // Get all user preferences (admin)
+  getAllUserPreferences: async (page?: number, limit?: number): Promise<ApiResponse<any>> => {
+    const params: any = {};
+    if (page) params.page = page;
+    if (limit) params.limit = limit;
+    const response = await api.get('/admin/user/preferences', { params });
+    return response.data;
+  },
+
+  // Update user preferences (admin)
+  updateUserPreferences: async (userId: string, preferences: any): Promise<ApiResponse<any>> => {
+    const response = await api.put(`/admin/user/${userId}/preferences`, preferences);
+    return response.data;
+  },
+};
+
 export default api; 

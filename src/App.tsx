@@ -13,6 +13,8 @@ import CategoryManagement from '@/pages/CategoryManagement';
 import SubcategoryManagement from '@/pages/SubcategoryManagement';
 import Feeds from '@/pages/Feeds';
 import Analytics from '@/pages/Analytics';
+import FeedAnalytics from '@/pages/FeedAnalytics';
+import UserPreferences from '@/pages/UserPreferences';
 import Settings from '@/pages/Settings';
 
 const { Content } = Layout;
@@ -29,6 +31,8 @@ const App: React.FC = () => {
               <Route path="/" element={<Dashboard />} />
               <Route path="/content" element={<ContentManagement />} />
               <Route path="/feeds" element={<Feeds />} />
+              <Route path="/feed-analytics" element={<FeedAnalytics />} />
+              <Route path="/user-preferences" element={<UserPreferences />} />
               <Route path="/bulk-upload" element={<BulkUpload />} />
               <Route path="/languages" element={<LanguageManagement />} />
               <Route path="/categories" element={<CategoryManagement />} />

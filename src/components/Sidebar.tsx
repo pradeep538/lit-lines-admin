@@ -11,6 +11,7 @@ import {
   FolderOutlined,
   FolderOpenOutlined,
   AppstoreOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 
 const { Sider } = Layout;
@@ -65,6 +66,16 @@ const Sidebar: React.FC = () => {
       key: '/analytics',
       icon: <BarChartOutlined />,
       label: 'Analytics',
+    },
+    {
+      key: '/feed-analytics',
+      icon: <BarChartOutlined />,
+      label: 'Feed Analytics',
+    },
+    {
+      key: '/user-preferences',
+      icon: <UserOutlined />,
+      label: 'User Preferences',
     },
     {
       key: '/settings',
