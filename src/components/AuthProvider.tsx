@@ -8,7 +8,7 @@ interface AuthProviderProps {
 }
 
 const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const { setUser, setLoading, validateAdminAccess, userData, isAuthenticated, restoreAuthState } = useAuthStore();
+  const { setUser, setLoading, validateAdminAccess, userData, isAuthenticated, isRestored, restoreAuthState } = useAuthStore();
 
   useEffect(() => {
     console.log('AuthProvider: Setting up Firebase auth state listener');
@@ -55,15 +55,15 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('AuthProvider: Cleaning up auth listener');
       unsubscribe();
     };
-  }, [setUser, setLoading, validateAdminAccess, userData, isAuthenticated]);
+  }, [setUser, setLoading, validateAdminAccess]); // Removed userData and isAuthenticated from dependencies
 
-  // Restore authentication state from persisted data on mount
+  // Restore authentication state from persisted data on mount (only once)
   useEffect(() => {
-    if (userData && isAuthenticated) {
+    if (userData && isAuthenticated && !isRestored) {
       console.log('AuthProvider: Restoring authentication state from persisted data');
       restoreAuthState();
     }
-  }, [userData, isAuthenticated, restoreAuthState]);
+  }, []); // Empty dependency array - only run once on mount
 
   return <>{children}</>;
 };

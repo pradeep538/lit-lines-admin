@@ -25,6 +25,7 @@ interface AuthState {
   isAdmin: boolean;
   isLoading: boolean;
   error: string | null;
+  isRestored: boolean; // Flag to prevent multiple restorations
   setUser: (user: User | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -43,6 +44,7 @@ export const useAuthStore = create<AuthState>()(
       isAdmin: false,
       isLoading: false,
       error: null,
+      isRestored: false,
       
       setUser: (user: User | null) => {
         if (user) {
@@ -58,6 +60,7 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isAdmin: false, // Will be validated with backend
             error: null,
+            isRestored: true, // Mark as restored when user is set
           });
         } else {
           set({
@@ -66,6 +69,7 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: false,
             isAdmin: false,
             error: null,
+            isRestored: false,
           });
         }
       },
@@ -90,6 +94,7 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: false,
             isAdmin: false,
             error: null,
+            isRestored: false,
           });
         } catch (error) {
           console.error('Logout error:', error);
@@ -100,6 +105,7 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: false,
             isAdmin: false,
             error: null,
+            isRestored: false,
           });
         }
       },
@@ -142,15 +148,19 @@ export const useAuthStore = create<AuthState>()(
       // Method to restore authentication state from persisted data
       restoreAuthState: async () => {
         const state = get();
-        if (state.userData && state.isAuthenticated) {
+        if (state.userData && state.isAuthenticated && !state.isRestored) {
           console.log('Restoring auth state from persisted data:', state.userData);
           // The Firebase auth state will be restored by the AuthProvider
-          // We just need to validate admin access
-          try {
-            await state.validateAdminAccess();
-          } catch (error) {
-            console.error('Failed to validate admin access during restore:', error);
+          // We just need to validate admin access if not already validated
+          if (!state.isAdmin) {
+            try {
+              await state.validateAdminAccess();
+            } catch (error) {
+              console.error('Failed to validate admin access during restore:', error);
+            }
           }
+          // Mark as restored to prevent multiple restorations
+          set({ isRestored: true });
         }
       },
     }),
@@ -160,6 +170,7 @@ export const useAuthStore = create<AuthState>()(
         userData: state.userData,
         isAuthenticated: state.isAuthenticated,
         isAdmin: state.isAdmin,
+        isRestored: state.isRestored,
       }),
     }
   )

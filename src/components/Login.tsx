@@ -13,26 +13,8 @@ const Login: React.FC = () => {
   // Use userData as fallback if user object is not available
   const currentUser = user || userData;
 
-  useEffect(() => {
-    // Check if user is already authenticated
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      setLoading(false);
-      if (user) {
-        setUser(user);
-        // Validate admin access with backend after Firebase authentication
-        try {
-          console.log('Validating admin access for user:', user.email);
-          await validateAdminAccess();
-        } catch (error) {
-          console.error('Failed to validate admin access:', error);
-        }
-      } else {
-        setUser(null);
-      }
-    });
-
-    return () => unsubscribe();
-  }, [setUser, setLoading, validateAdminAccess]);
+  // Remove the duplicate Firebase auth listener from Login component
+  // The AuthProvider already handles this
 
   const handleGoogleLogin = async () => {
     try {
