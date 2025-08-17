@@ -25,10 +25,16 @@ import {
 import { contentApi, categoriesApi, subcategoriesApi, languagesApi } from '@/services/api';
 import type { Content } from '@/types';
 import ContentForm from '@/components/ContentForm';
+import { useAuthStore } from '@/store/authStore';
 
 const { Option } = Select;
 
 const ContentManagement: React.FC = () => {
+  const { user, userData, isAuthenticated, isLoading: authLoading } = useAuthStore();
+  
+  // Check if user is authenticated (either user object or userData)
+  const isUserAuthenticated = !!user || (!!userData && isAuthenticated);
+  
   const [searchText, setSearchText] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState<string>('');
   const [selectedType, setSelectedType] = useState<string>('');
@@ -40,7 +46,7 @@ const ContentManagement: React.FC = () => {
   const [form] = Form.useForm();
   const queryClient = useQueryClient();
 
-  // Queries
+  // Queries - only run when user is authenticated
   const { data: contentData, isLoading } = useQuery({
     queryKey: ['content', { search: searchText, language: selectedLanguage, type: selectedType, status: selectedStatus }, currentPage, pageSize],
     queryFn: () => contentApi.getContentList({
@@ -51,21 +57,25 @@ const ContentManagement: React.FC = () => {
       type: selectedType,
       status: selectedStatus,
     }),
+    enabled: isUserAuthenticated, // Only run when user is authenticated
   });
 
   const { data: categoriesData } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoriesApi.getCategories(),
+    enabled: isUserAuthenticated, // Only run when user is authenticated
   });
 
   const { data: subcategoriesData } = useQuery({
     queryKey: ['subcategories'],
     queryFn: () => subcategoriesApi.getSubcategories(),
+    enabled: isUserAuthenticated, // Only run when user is authenticated
   });
 
   const { data: languagesData } = useQuery({
     queryKey: ['languages'],
     queryFn: () => languagesApi.getLanguages(),
+    enabled: isUserAuthenticated, // Only run when user is authenticated
   });
 
   // Mutations
@@ -241,6 +251,20 @@ const ContentManagement: React.FC = () => {
       ),
     },
   ];
+
+  // Show loading when auth is being restored
+  if (authLoading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '50vh' 
+      }}>
+        <div>Restoring session...</div>
+      </div>
+    );
+  }
 
   return (
     <div>

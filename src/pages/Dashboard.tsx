@@ -12,7 +12,10 @@ import { useAuthStore } from '@/store/authStore';
 
 
 const Dashboard: React.FC = () => {
-  const { user, isLoading: authLoading } = useAuthStore();
+  const { user, userData, isAuthenticated, isLoading: authLoading } = useAuthStore();
+
+  // Check if user is authenticated (either user object or userData)
+  const isUserAuthenticated = !!user || (!!userData && isAuthenticated);
 
   // Health check query - only run when user is authenticated
   const { data: healthData, isLoading: healthLoading, error: healthError } = useQuery({
@@ -21,7 +24,7 @@ const Dashboard: React.FC = () => {
     staleTime: 30000, // 30 seconds
     retry: 1,
     refetchOnWindowFocus: false,
-    enabled: !!user, // Only run when user is authenticated
+    enabled: isUserAuthenticated, // Only run when user is authenticated
   });
 
   const { data: analytics, isLoading } = useQuery({
@@ -30,7 +33,7 @@ const Dashboard: React.FC = () => {
     staleTime: 30000, // 30 seconds
     retry: 1,
     refetchOnWindowFocus: false,
-    enabled: !!user, // Only run when user is authenticated
+    enabled: isUserAuthenticated, // Only run when user is authenticated
   });
 
   // Use fallback data when API is not available

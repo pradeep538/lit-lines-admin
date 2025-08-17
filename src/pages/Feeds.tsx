@@ -35,7 +35,10 @@ interface FeedFilters {
 }
 
 const Feeds: React.FC = () => {
-  const { user, isLoading: authLoading } = useAuthStore();
+  const { user, userData, isAuthenticated, isLoading: authLoading } = useAuthStore();
+  
+  // Check if user is authenticated (either user object or userData)
+  const isUserAuthenticated = !!user || (!!userData && isAuthenticated);
   
   const [filters, setFilters] = useState<FeedFilters>({
     search: '',
@@ -63,19 +66,19 @@ const Feeds: React.FC = () => {
     }),
     staleTime: 30000,
     retry: 1,
-    enabled: !!user, // Only run when user is authenticated
+    enabled: isUserAuthenticated, // Only run when user is authenticated
   });
 
   const { data: categoriesData } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoriesApi.getCategories(),
-    enabled: !!user, // Only run when user is authenticated
+    enabled: isUserAuthenticated, // Only run when user is authenticated
   });
 
   const { data: languagesData } = useQuery({
     queryKey: ['languages'],
     queryFn: () => languagesApi.getLanguages(),
-    enabled: !!user, // Only run when user is authenticated
+    enabled: isUserAuthenticated, // Only run when user is authenticated
   });
 
   // Get subcategories for selected category

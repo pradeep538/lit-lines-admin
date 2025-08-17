@@ -64,6 +64,9 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('AuthProvider: Restoring authentication state from persisted data');
       console.log('AuthProvider: User data:', userData);
       
+      // Set loading to true while we wait for Firebase auth to be restored
+      setLoading(true);
+      
       // Wait for Firebase auth state to be restored
       // Firebase auth state restoration can take a moment on page refresh
       const checkFirebaseAuth = () => {
@@ -81,6 +84,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           
           // Firebase auth state doesn't match, clear the persisted state
           setUser(null);
+          setLoading(false);
         } else {
           // Firebase auth state is not yet restored, wait a bit and try again
           console.log('AuthProvider: Firebase auth state not yet restored, waiting...');
