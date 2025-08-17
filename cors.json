@@ -1,0 +1,11 @@
+{
+    "CORSRules": [
+      {
+        "AllowedOrigins": ["https://lit-lines-admin.vercel.app"],
+        "AllowedMethods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
+        "AllowedHeaders": ["Content-Type", "Authorization", "x-amz-acl"],
+        "MaxAgeSeconds": 3000
+      }
+    ]
+  }
+  
