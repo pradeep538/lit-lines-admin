@@ -80,7 +80,7 @@ const ContentManagement: React.FC = () => {
 
   // Mutations
   const createContentMutation = useMutation({
-    mutationFn: (data: { content: Content[]; user_id: string }) => 
+    mutationFn: (data: { content: Content; user_id: string }) => 
       contentApi.createContent(data),
     onSuccess: () => {
       message.success('Content created successfully');
@@ -401,24 +401,31 @@ const ContentManagement: React.FC = () => {
           subcategories={subcategoriesData?.subcategories || []}
           languages={languagesData?.languages || []}
           onSubmit={(values) => {
-            const contentData = {
-              content: [{
-                ...values,
-                id: editingContent?.id || '',
-                content_group_id: editingContent?.content_group_id || '',
-                popularity_score: editingContent?.popularity_score || 0,
-                is_visible: true,
-                created_at: editingContent?.created_at || new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-              }],
-              user_id: 'admin-user', // This should come from auth context
+            const contentObject = {
+              ...values,
+              id: editingContent?.id || '',
+              content_group_id: editingContent?.content_group_id || '',
+              popularity_score: editingContent?.popularity_score || 0,
+              is_visible: true,
+              created_at: editingContent?.created_at || new Date().toISOString(),
+              updated_at: new Date().toISOString(),
             };
             
             // Use create mutation for new content, update mutation for existing content
             if (editingContent?.id) {
-              updateContentMutation.mutate(contentData);
+              // Update expects array format
+              const updateData = {
+                content: [contentObject],
+                user_id: 'admin-user', // This should come from auth context
+              };
+              updateContentMutation.mutate(updateData);
             } else {
-              createContentMutation.mutate(contentData);
+              // Create expects single object format
+              const createData = {
+                content: contentObject,
+                user_id: 'admin-user', // This should come from auth context
+              };
+              createContentMutation.mutate(createData);
             }
           }}
           loading={createContentMutation.isPending || updateContentMutation.isPending}

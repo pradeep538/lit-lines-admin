@@ -144,7 +144,7 @@ export const contentApi = {
   },
 
   // Create content
-  createContent: async (data: BulkContentRequest): Promise<ApiResponse<any>> => {
+  createContent: async (data: { content: Content; user_id: string }): Promise<ApiResponse<any>> => {
     const response = await api.post('/appsmith/content/create', data);
     return response.data;
   },
