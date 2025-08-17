@@ -14,8 +14,8 @@ import { useAuthStore } from '@/store/authStore';
 const Dashboard: React.FC = () => {
   const { user, userData, isAuthenticated, isLoading: authLoading } = useAuthStore();
 
-  // Check if user is authenticated (either user object or userData)
-  const isUserAuthenticated = !!user || (!!userData && isAuthenticated);
+  // Check if user is authenticated - we need the actual Firebase user object
+  const isUserAuthenticated = !!user;
 
   // Health check query - only run when user is authenticated
   const { data: healthData, isLoading: healthLoading, error: healthError } = useQuery({

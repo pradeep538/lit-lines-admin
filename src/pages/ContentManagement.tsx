@@ -32,8 +32,8 @@ const { Option } = Select;
 const ContentManagement: React.FC = () => {
   const { user, userData, isAuthenticated, isLoading: authLoading } = useAuthStore();
   
-  // Check if user is authenticated (either user object or userData)
-  const isUserAuthenticated = !!user || (!!userData && isAuthenticated);
+  // Check if user is authenticated - we need the actual Firebase user object
+  const isUserAuthenticated = !!user;
   
   const [searchText, setSearchText] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState<string>('');

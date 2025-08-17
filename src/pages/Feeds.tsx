@@ -37,8 +37,8 @@ interface FeedFilters {
 const Feeds: React.FC = () => {
   const { user, userData, isAuthenticated, isLoading: authLoading } = useAuthStore();
   
-  // Check if user is authenticated (either user object or userData)
-  const isUserAuthenticated = !!user || (!!userData && isAuthenticated);
+  // Check if user is authenticated - we need the actual Firebase user object
+  const isUserAuthenticated = !!user;
   
   const [filters, setFilters] = useState<FeedFilters>({
     search: '',

@@ -69,9 +69,12 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // Wait for Firebase auth state to be restored
       // Firebase auth state restoration can take a moment on page refresh
+      let retryCount = 0;
+      const maxRetries = 50; // Maximum 5 seconds (50 * 100ms)
+      
       const checkFirebaseAuth = () => {
         const currentUser = auth.currentUser;
-        console.log('AuthProvider: Checking Firebase auth state:', currentUser?.email);
+        console.log('AuthProvider: Checking Firebase auth state:', currentUser?.email, 'Retry:', retryCount);
         
         if (currentUser && currentUser.email === userData.email) {
           console.log('AuthProvider: Firebase auth state matches persisted state');
@@ -85,10 +88,16 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // Firebase auth state doesn't match, clear the persisted state
           setUser(null);
           setLoading(false);
-        } else {
+        } else if (retryCount < maxRetries) {
           // Firebase auth state is not yet restored, wait a bit and try again
-          console.log('AuthProvider: Firebase auth state not yet restored, waiting...');
+          retryCount++;
+          console.log('AuthProvider: Firebase auth state not yet restored, waiting... (retry', retryCount, 'of', maxRetries, ')');
           setTimeout(checkFirebaseAuth, 100); // Check again in 100ms
+        } else {
+          // Max retries reached, clear the persisted state
+          console.log('AuthProvider: Max retries reached, clearing persisted state');
+          setUser(null);
+          setLoading(false);
         }
       };
       
