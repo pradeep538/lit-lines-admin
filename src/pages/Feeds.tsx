@@ -21,6 +21,7 @@ import {
 } from '@ant-design/icons';
 import { contentApi, categoriesApi, languagesApi } from '@/services/api';
 import type { Content, Category, Language } from '@/types';
+import { useAuthStore } from '@/store/authStore';
 
 const { Option } = Select;
 
@@ -34,6 +35,8 @@ interface FeedFilters {
 }
 
 const Feeds: React.FC = () => {
+  const { user, isLoading: authLoading } = useAuthStore();
+  
   const [filters, setFilters] = useState<FeedFilters>({
     search: '',
     language: '',
@@ -45,7 +48,7 @@ const Feeds: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  // Queries
+  // Queries - only run when user is authenticated
   const { data: contentData, isLoading: contentLoading } = useQuery({
     queryKey: ['content', filters, currentPage, pageSize],
     queryFn: () => contentApi.getContentList({
@@ -60,16 +63,19 @@ const Feeds: React.FC = () => {
     }),
     staleTime: 30000,
     retry: 1,
+    enabled: !!user, // Only run when user is authenticated
   });
 
   const { data: categoriesData } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoriesApi.getCategories(),
+    enabled: !!user, // Only run when user is authenticated
   });
 
   const { data: languagesData } = useQuery({
     queryKey: ['languages'],
     queryFn: () => languagesApi.getLanguages(),
+    enabled: !!user, // Only run when user is authenticated
   });
 
   // Get subcategories for selected category
@@ -192,6 +198,20 @@ const Feeds: React.FC = () => {
       ),
     },
   ];
+
+  // Show loading when auth is being restored
+  if (authLoading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '50vh' 
+      }}>
+        <div>Restoring session...</div>
+      </div>
+    );
+  }
 
   return (
     <div>
