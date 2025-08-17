@@ -173,6 +173,17 @@ export const contentApi = {
     });
     return response.data;
   },
+
+  // Get content filter options
+  getContentFilters: async (): Promise<ApiResponse<{
+    categories: string[];
+    subcategories: string[];
+    languages: string[];
+    types: string[];
+  }>> => {
+    const response = await api.get('/appsmith/content/filters');
+    return response.data;
+  },
 };
 
 // Upload API

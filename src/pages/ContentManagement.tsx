@@ -37,6 +37,8 @@ const ContentManagement: React.FC = () => {
   
   const [searchText, setSearchText] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
   const [selectedType, setSelectedType] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -48,12 +50,14 @@ const ContentManagement: React.FC = () => {
 
   // Queries - only run when user is authenticated
   const { data: contentData, isLoading } = useQuery({
-    queryKey: ['content', { search: searchText, language: selectedLanguage, type: selectedType, status: selectedStatus }, currentPage, pageSize],
+    queryKey: ['content', { search: searchText, language: selectedLanguage, category: selectedCategory, subcategory: selectedSubcategory, type: selectedType, status: selectedStatus }, currentPage, pageSize],
     queryFn: () => contentApi.getContentList({
       page: currentPage,
       limit: pageSize,
       search: searchText,
       language_id: selectedLanguage,
+      category_id: selectedCategory,
+      subcategory_id: selectedSubcategory,
       type: selectedType,
       status: selectedStatus,
     }),
@@ -75,6 +79,12 @@ const ContentManagement: React.FC = () => {
   const { data: languagesData } = useQuery({
     queryKey: ['languages'],
     queryFn: () => languagesApi.getLanguages(),
+    enabled: isUserAuthenticated, // Only run when user is authenticated
+  });
+
+  const { data: contentFiltersData } = useQuery({
+    queryKey: ['content-filters'],
+    queryFn: () => contentApi.getContentFilters(),
     enabled: isUserAuthenticated, // Only run when user is authenticated
   });
 
@@ -337,9 +347,47 @@ const ContentManagement: React.FC = () => {
             allowClear
             style={{ width: 150 }}
           >
-            {languagesData?.languages?.map((lang: any) => (
+            {contentFiltersData?.data?.languages?.map((langId: string) => (
+              <Option key={langId} value={langId}>
+                {langId.toUpperCase()}
+              </Option>
+            )) || languagesData?.languages?.map((lang: any) => (
               <Option key={lang.language_id} value={lang.language_id}>
                 {lang.name}
+              </Option>
+            ))}
+          </Select>
+          <Select
+            placeholder="Category"
+            value={selectedCategory}
+            onChange={setSelectedCategory}
+            allowClear
+            style={{ width: 150 }}
+          >
+            {contentFiltersData?.data?.categories?.map((categoryId: string) => (
+              <Option key={categoryId} value={categoryId}>
+                {categoryId}
+              </Option>
+            )) || categoriesData?.categories?.map((category: any) => (
+              <Option key={category.category_id} value={category.category_id}>
+                {category.name?.en || category.category_id}
+              </Option>
+            ))}
+          </Select>
+          <Select
+            placeholder="Subcategory"
+            value={selectedSubcategory}
+            onChange={setSelectedSubcategory}
+            allowClear
+            style={{ width: 150 }}
+          >
+            {contentFiltersData?.data?.subcategories?.map((subcategoryId: string) => (
+              <Option key={subcategoryId} value={subcategoryId}>
+                {subcategoryId}
+              </Option>
+            )) || subcategoriesData?.subcategories?.map((subcategory: any) => (
+              <Option key={subcategory.subcategory_id} value={subcategory.subcategory_id}>
+                {subcategory.name?.en || subcategory.subcategory_id}
               </Option>
             ))}
           </Select>
@@ -350,9 +398,15 @@ const ContentManagement: React.FC = () => {
             allowClear
             style={{ width: 120 }}
           >
-            <Option value="quote">Quote</Option>
-            <Option value="meme">Meme</Option>
-            <Option value="dialogue">Dialogue</Option>
+            {contentFiltersData?.data?.types?.map((typeValue: string) => (
+              <Option key={typeValue} value={typeValue}>
+                {typeValue.charAt(0).toUpperCase() + typeValue.slice(1)}
+              </Option>
+            )) || [
+              <Option key="quote" value="quote">Quote</Option>,
+              <Option key="meme" value="meme">Meme</Option>,
+              <Option key="dialogue" value="dialogue">Dialogue</Option>
+            ]}
           </Select>
           <Select
             placeholder="Status"
@@ -365,7 +419,60 @@ const ContentManagement: React.FC = () => {
             <Option value="inactive">Inactive</Option>
             <Option value="draft">Draft</Option>
           </Select>
+          <Button
+            onClick={() => {
+              setSearchText('');
+              setSelectedLanguage('');
+              setSelectedCategory('');
+              setSelectedSubcategory('');
+              setSelectedType('');
+              setSelectedStatus('');
+              setCurrentPage(1);
+            }}
+            style={{ marginLeft: '8px' }}
+          >
+            Clear Filters
+          </Button>
         </Space>
+        
+        {/* Active Filters Summary */}
+        {(searchText || selectedLanguage || selectedCategory || selectedSubcategory || selectedType || selectedStatus) && (
+          <div style={{ marginTop: '16px' }}>
+            <Space wrap>
+              <span style={{ fontWeight: 500, color: '#666' }}>Active Filters:</span>
+              {searchText && (
+                <Tag closable onClose={() => setSearchText('')}>
+                  Search: {searchText}
+                </Tag>
+              )}
+              {selectedLanguage && (
+                <Tag closable onClose={() => setSelectedLanguage('')}>
+                  Language: {selectedLanguage.toUpperCase()}
+                </Tag>
+              )}
+              {selectedCategory && (
+                <Tag closable onClose={() => setSelectedCategory('')}>
+                  Category: {selectedCategory}
+                </Tag>
+              )}
+              {selectedSubcategory && (
+                <Tag closable onClose={() => setSelectedSubcategory('')}>
+                  Subcategory: {selectedSubcategory}
+                </Tag>
+              )}
+              {selectedType && (
+                <Tag closable onClose={() => setSelectedType('')}>
+                  Type: {selectedType.charAt(0).toUpperCase() + selectedType.slice(1)}
+                </Tag>
+              )}
+              {selectedStatus && (
+                <Tag closable onClose={() => setSelectedStatus('')}>
+                  Status: {selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1)}
+                </Tag>
+              )}
+            </Space>
+          </div>
+        )}
       </Card>
 
       {/* Content Table */}
