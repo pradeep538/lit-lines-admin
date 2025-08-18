@@ -19,6 +19,9 @@ export interface Content extends BaseModel {
   status: string;
   popularity_score: number;
   is_visible: boolean;
+  scheduled_at?: string;
+  published_at?: string;
+  is_scheduled?: boolean;
   category?: CategoryInfo;
   subcategory?: SubcategoryInfo;
   language?: LanguageInfo;

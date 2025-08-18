@@ -180,8 +180,45 @@ export const contentApi = {
     subcategories: string[];
     languages: string[];
     types: string[];
+    statuses: string[];
   }>> => {
     const response = await api.get('/appsmith/content/filters');
+    return response.data;
+  },
+
+  // Schedule content
+  scheduleContent: async (data: { content_id: string; scheduled_at: string }): Promise<ApiResponse<any>> => {
+    const response = await api.post(`/appsmith/content/${data.content_id}/schedule`, {
+      scheduled_at: data.scheduled_at
+    });
+    return response.data;
+  },
+
+  // Publish content
+  publishContent: async (data: { content_id: string }): Promise<ApiResponse<any>> => {
+    const response = await api.post(`/appsmith/content/${data.content_id}/publish`);
+    return response.data;
+  },
+
+  // Bulk schedule content
+  bulkScheduleContent: async (data: { content_ids: string[]; scheduled_at: string }): Promise<ApiResponse<any>> => {
+    const response = await api.post('/appsmith/content/scheduling/bulk-schedule', data);
+    return response.data;
+  },
+
+  // Get scheduling statistics
+  getSchedulingStats: async (): Promise<ApiResponse<any>> => {
+    const response = await api.get('/appsmith/content/scheduling/stats');
+    return response.data;
+  },
+
+  // Get feed preview
+  getFeedPreview: async (params: {
+    user_id: string;
+    segment?: string;
+    limit?: number;
+  }): Promise<PaginatedResponse<Content> & { feed_info?: any; user_segment?: string }> => {
+    const response = await api.get('/api/v1/feed', { params });
     return response.data;
   },
 };
@@ -485,6 +522,7 @@ export const feedApi = {
     user_segment?: string;
     start_date?: string;
     end_date?: string;
+    segment?: string;
   }): Promise<ApiResponse<any>> => {
     const response = await api.get('/admin/feed/analytics', { params });
     return response.data;
@@ -502,6 +540,16 @@ export const feedApi = {
     date_range?: string;
   }): Promise<ApiResponse<any>> => {
     const response = await api.get('/admin/feed/performance', { params });
+    return response.data;
+  },
+
+  // Get feed preview for specific user
+  getFeedPreview: async (params: {
+    user_id: string;
+    segment?: string;
+    limit?: number;
+  }): Promise<ApiResponse<any>> => {
+    const response = await api.get('/admin/feed/preview', { params });
     return response.data;
   },
 };

@@ -20,11 +20,16 @@ import {
   EditOutlined, 
   DeleteOutlined,
   EyeOutlined,
-  DownloadOutlined
+  DownloadOutlined,
+  ClockCircleOutlined,
+  PlayCircleOutlined,
+  StopOutlined
 } from '@ant-design/icons';
 import { contentApi, categoriesApi, subcategoriesApi, languagesApi } from '@/services/api';
 import type { Content } from '@/types';
 import ContentForm from '@/components/ContentForm';
+import SchedulingModal from '@/components/SchedulingModal';
+import FeedPreviewModal from '@/components/FeedPreviewModal';
 import { useAuthStore } from '@/store/authStore';
 
 const { Option } = Select;
@@ -47,6 +52,11 @@ const ContentManagement: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [form] = Form.useForm();
   const queryClient = useQueryClient();
+  
+  // Scheduling states
+  const [selectedContentIds, setSelectedContentIds] = useState<string[]>([]);
+  const [schedulingModalVisible, setSchedulingModalVisible] = useState(false);
+  const [feedPreviewModalVisible, setFeedPreviewModalVisible] = useState(false);
 
   // Queries - only run when user is authenticated
   const { data: contentData, isLoading } = useQuery({
@@ -143,6 +153,44 @@ const ContentManagement: React.FC = () => {
     },
   });
 
+  // Scheduling mutations
+  const scheduleContentMutation = useMutation({
+    mutationFn: (data: { content_id: string; scheduled_at: string }) => 
+      contentApi.scheduleContent(data),
+    onSuccess: () => {
+      message.success('Content scheduled successfully');
+      queryClient.invalidateQueries({ queryKey: ['content'] });
+    },
+    onError: () => {
+      message.error('Failed to schedule content');
+    },
+  });
+
+  const publishContentMutation = useMutation({
+    mutationFn: (data: { content_id: string }) => 
+      contentApi.publishContent(data),
+    onSuccess: () => {
+      message.success('Content published successfully');
+      queryClient.invalidateQueries({ queryKey: ['content'] });
+    },
+    onError: () => {
+      message.error('Failed to publish content');
+    },
+  });
+
+  const bulkScheduleMutation = useMutation({
+    mutationFn: (data: { content_ids: string[]; scheduled_at: string }) => 
+      contentApi.bulkScheduleContent(data),
+    onSuccess: () => {
+      message.success('Content bulk scheduled successfully');
+      queryClient.invalidateQueries({ queryKey: ['content'] });
+      setSelectedContentIds([]);
+    },
+    onError: () => {
+      message.error('Failed to bulk schedule content');
+    },
+  });
+
   const handleEdit = (record: Content) => {
     setEditingContent(record);
     form.setFieldsValue({
@@ -165,6 +213,33 @@ const ContentManagement: React.FC = () => {
     deleteContentMutation.mutate({
       content_ids: [contentId],
       user_id: 'admin-user', // This should come from auth context
+    });
+  };
+
+  const handleSchedule = (record: Content) => {
+    // For now, schedule for 1 hour from now
+    const scheduledAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    scheduleContentMutation.mutate({
+      content_id: record.id,
+      scheduled_at: scheduledAt,
+    });
+  };
+
+  const handlePublish = (record: Content) => {
+    publishContentMutation.mutate({
+      content_id: record.id,
+    });
+  };
+
+  const handleDeactivate = (record: Content) => {
+    // Update content status to inactive
+    updateContentMutation.mutate({
+      content: [{
+        ...record,
+        status: 'inactive',
+        updated_at: new Date().toISOString(),
+      }],
+      user_id: 'admin-user',
     });
   };
 
@@ -232,10 +307,21 @@ const ContentManagement: React.FC = () => {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      render: (status: string) => (
-        <Tag color={status === 'active' ? 'green' : 'orange'}>
-          {status}
-        </Tag>
+      render: (status: string, record: Content) => (
+        <div>
+          <Tag color={
+            status === 'active' ? 'green' : 
+            status === 'scheduled' ? 'blue' : 
+            status === 'draft' ? 'orange' : 'red'
+          }>
+            {status}
+          </Tag>
+          {record.scheduled_at && (
+            <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
+              Scheduled: {new Date(record.scheduled_at).toLocaleString()}
+            </div>
+          )}
+        </div>
       ),
     },
     {
@@ -248,6 +334,30 @@ const ContentManagement: React.FC = () => {
           <div>💾 {engagement?.total_saves || 0}</div>
         </div>
       ),
+    },
+    {
+      title: 'Feed Performance',
+      key: 'feed_performance',
+      render: (record: Content) => {
+        const engagement = record.engagement;
+        if (!engagement) return <span style={{ color: '#999' }}>No data</span>;
+        
+        const totalInteractions = (engagement.total_likes || 0) + (engagement.total_saves || 0);
+        const viewCount = engagement.view_count || 0;
+        const engagementRate = viewCount > 0 ? ((totalInteractions / viewCount) * 100) : 0;
+        const engagementRateDisplay = engagementRate.toFixed(1);
+        
+        return (
+          <div style={{ fontSize: '12px' }}>
+            <div style={{ fontWeight: 500, color: engagementRate > 5 ? '#52c41a' : engagementRate > 2 ? '#faad14' : '#ff4d4f' }}>
+              {engagementRateDisplay}% engagement
+            </div>
+            <div style={{ color: '#666' }}>
+              {viewCount.toLocaleString()} views
+            </div>
+          </div>
+        );
+      },
     },
     {
       title: 'Actions',
@@ -269,6 +379,36 @@ const ContentManagement: React.FC = () => {
               onClick={() => handleEdit(record)}
             />
           </Tooltip>
+          {record.status === 'draft' && (
+            <Tooltip title="Schedule">
+              <Button 
+                type="text" 
+                icon={<ClockCircleOutlined />} 
+                size="small"
+                onClick={() => handleSchedule(record)}
+              />
+            </Tooltip>
+          )}
+          {record.status === 'scheduled' && (
+            <Tooltip title="Publish Now">
+              <Button 
+                type="text" 
+                icon={<PlayCircleOutlined />} 
+                size="small"
+                onClick={() => handlePublish(record)}
+              />
+            </Tooltip>
+          )}
+          {record.status === 'active' && (
+            <Tooltip title="Deactivate">
+              <Button 
+                type="text" 
+                icon={<StopOutlined />} 
+                size="small"
+                onClick={() => handleDeactivate(record)}
+              />
+            </Tooltip>
+          )}
           <Tooltip title="Delete">
             <Popconfirm
               title="Are you sure you want to delete this content?"
@@ -316,6 +456,20 @@ const ContentManagement: React.FC = () => {
           >
             Export
           </Button>
+          <Button 
+            icon={<EyeOutlined />}
+            onClick={() => setFeedPreviewModalVisible(true)}
+          >
+            Feed Preview
+          </Button>
+          {selectedContentIds.length > 0 && (
+            <Button 
+              icon={<ClockCircleOutlined />}
+              onClick={() => setSchedulingModalVisible(true)}
+            >
+              Bulk Schedule ({selectedContentIds.length})
+            </Button>
+          )}
           <Button 
             type="primary" 
             icon={<PlusOutlined />}
@@ -415,9 +569,10 @@ const ContentManagement: React.FC = () => {
             allowClear
             style={{ width: 120 }}
           >
+            <Option value="draft">Draft</Option>
+            <Option value="scheduled">Scheduled</Option>
             <Option value="active">Active</Option>
             <Option value="inactive">Inactive</Option>
-            <Option value="draft">Draft</Option>
           </Select>
           <Button
             onClick={() => {
@@ -482,6 +637,15 @@ const ContentManagement: React.FC = () => {
           dataSource={contentData?.content || []}
           loading={isLoading}
           rowKey="id"
+          rowSelection={{
+            selectedRowKeys: selectedContentIds,
+            onChange: (selectedRowKeys) => {
+              setSelectedContentIds(selectedRowKeys as string[]);
+            },
+            getCheckboxProps: (record) => ({
+              disabled: record.status === 'active', // Can't schedule active content
+            }),
+          }}
           pagination={{
             current: currentPage,
             pageSize: pageSize,
@@ -550,6 +714,28 @@ const ContentManagement: React.FC = () => {
           loading={createContentMutation.isPending || updateContentMutation.isPending}
         />
       </Modal>
+
+      {/* Scheduling Modal */}
+      <SchedulingModal
+        visible={schedulingModalVisible}
+        onCancel={() => setSchedulingModalVisible(false)}
+        onSchedule={(scheduledAt) => {
+          bulkScheduleMutation.mutate({
+            content_ids: selectedContentIds,
+            scheduled_at: scheduledAt,
+          });
+          setSchedulingModalVisible(false);
+        }}
+        loading={bulkScheduleMutation.isPending}
+        contentCount={selectedContentIds.length}
+      />
+
+      {/* Feed Preview Modal */}
+      <FeedPreviewModal
+        visible={feedPreviewModalVisible}
+        onCancel={() => setFeedPreviewModalVisible(false)}
+        contentId={editingContent?.id}
+      />
     </div>
   );
 };

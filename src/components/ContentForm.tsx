@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Form, Input, Select, Button, Row, Col, Space } from 'antd';
+import { Form, Input, Select, Button, Row, Col, Space, DatePicker, Switch, Divider } from 'antd';
 import type { FormInstance } from 'antd';
 import type { ContentFormData } from '@/types';
 import ImageUpload from './ImageUpload';
+import dayjs from 'dayjs';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -30,6 +31,7 @@ const ContentForm: React.FC<ContentFormProps> = ({
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string | undefined>(
     form.getFieldValue('subcategory_id')
   );
+  const [isScheduled, setIsScheduled] = useState<boolean>(false);
 
   // Reset subcategory when category changes
   useEffect(() => {
@@ -55,6 +57,24 @@ const ContentForm: React.FC<ContentFormProps> = ({
     }
   }, [form.getFieldValue('category_id'), form.getFieldValue('subcategory_id'), subcategories, form]);
 
+  // Handle scheduling toggle
+  useEffect(() => {
+    const scheduledAt = form.getFieldValue('scheduled_at');
+    const status = form.getFieldValue('status');
+    
+    if (scheduledAt) {
+      setIsScheduled(true);
+      if (status !== 'scheduled') {
+        form.setFieldValue('status', 'scheduled');
+      }
+    } else {
+      setIsScheduled(false);
+      if (status === 'scheduled') {
+        form.setFieldValue('status', 'draft');
+      }
+    }
+  }, [form.getFieldValue('scheduled_at'), form.getFieldValue('status'), form]);
+
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategoryId(categoryId);
     // Clear subcategory when category changes
@@ -66,9 +86,40 @@ const ContentForm: React.FC<ContentFormProps> = ({
     setSelectedSubcategoryId(subcategoryId);
   };
 
+  const handleSchedulingToggle = (checked: boolean) => {
+    setIsScheduled(checked);
+    if (checked) {
+      // Set default scheduled time to 1 hour from now
+      const defaultScheduledTime = dayjs().add(1, 'hour');
+      form.setFieldValue('scheduled_at', defaultScheduledTime);
+      form.setFieldValue('status', 'scheduled');
+    } else {
+      form.setFieldValue('scheduled_at', undefined);
+      form.setFieldValue('status', 'draft');
+    }
+  };
+
+  const handleScheduledDateChange = (date: any) => {
+    if (date) {
+      form.setFieldValue('scheduled_at', date);
+      form.setFieldValue('status', 'scheduled');
+      setIsScheduled(true);
+    } else {
+      form.setFieldValue('scheduled_at', undefined);
+      form.setFieldValue('status', 'draft');
+      setIsScheduled(false);
+    }
+  };
+
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
+      
+      // Convert scheduled_at to ISO string if it exists
+      if (values.scheduled_at) {
+        values.scheduled_at = values.scheduled_at.toISOString();
+      }
+      
       onSubmit(values);
     } catch (error) {
       console.error('Form validation failed:', error);
@@ -154,9 +205,10 @@ const ContentForm: React.FC<ContentFormProps> = ({
             rules={[{ required: true, message: 'Please select status' }]}
           >
             <Select placeholder="Select status">
+              <Option value="draft">Draft</Option>
+              <Option value="scheduled">Scheduled</Option>
               <Option value="active">Active</Option>
               <Option value="inactive">Inactive</Option>
-              <Option value="draft">Draft</Option>
             </Select>
           </Form.Item>
         </Col>
@@ -200,6 +252,54 @@ const ContentForm: React.FC<ContentFormProps> = ({
                   </Option>
                 ))}
             </Select>
+          </Form.Item>
+        </Col>
+      </Row>
+
+      {/* Scheduling Section */}
+      <Divider orientation="left">Scheduling</Divider>
+      
+      <Row gutter={16}>
+        <Col span={24}>
+          <Form.Item
+            label="Schedule Content"
+            help="Enable to schedule this content for future publishing"
+          >
+            <Space direction="vertical" style={{ width: '100%' }}>
+              <Switch
+                checked={isScheduled}
+                onChange={handleSchedulingToggle}
+                checkedChildren="Scheduled"
+                unCheckedChildren="Not Scheduled"
+              />
+              
+              {isScheduled && (
+                <Form.Item
+                  name="scheduled_at"
+                  label="Scheduled Date & Time"
+                  rules={[
+                    { required: isScheduled, message: 'Please select scheduled date and time' },
+                    {
+                      validator: (_, value) => {
+                        if (value && value.isBefore(dayjs())) {
+                          return Promise.reject('Scheduled time cannot be in the past');
+                        }
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
+                >
+                  <DatePicker
+                    showTime
+                    format="YYYY-MM-DD HH:mm:ss"
+                    placeholder="Select date and time"
+                    onChange={handleScheduledDateChange}
+                    disabledDate={(current) => current && current < dayjs().startOf('day')}
+                    style={{ width: '100%' }}
+                  />
+                </Form.Item>
+              )}
+            </Space>
           </Form.Item>
         </Col>
       </Row>
