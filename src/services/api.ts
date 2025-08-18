@@ -218,7 +218,7 @@ export const contentApi = {
     segment?: string;
     limit?: number;
   }): Promise<PaginatedResponse<Content> & { feed_info?: any; user_segment?: string }> => {
-    const response = await api.get('/api/v1/feed', { params });
+    const response = await api.get('/admin/feed/preview', { params });
     return response.data;
   },
 };
@@ -540,16 +540,6 @@ export const feedApi = {
     date_range?: string;
   }): Promise<ApiResponse<any>> => {
     const response = await api.get('/admin/feed/performance', { params });
-    return response.data;
-  },
-
-  // Get feed preview for specific user
-  getFeedPreview: async (params: {
-    user_id: string;
-    segment?: string;
-    limit?: number;
-  }): Promise<ApiResponse<any>> => {
-    const response = await api.get('/admin/feed/preview', { params });
     return response.data;
   },
 };

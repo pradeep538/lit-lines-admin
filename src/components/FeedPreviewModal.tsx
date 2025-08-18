@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Modal, Select, Button, Space, Card, List, Tag, Spin, Empty, Typography, Divider } from 'antd';
+import React, { useState } from 'react';
+import { Modal, Select, Button, Space, Card, Tag, Spin, Empty, Typography, Divider } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import { EyeOutlined, UserOutlined, BarChartOutlined } from '@ant-design/icons';
 import { contentApi, feedApi } from '@/services/api';
@@ -54,7 +54,7 @@ const FeedPreviewModal: React.FC<FeedPreviewModalProps> = ({
   contentId,
 }) => {
   const [selectedSegment, setSelectedSegment] = useState<string>('new_user');
-  const [selectedUserId, setSelectedUserId] = useState<string>('test-user');
+  const selectedUserId = 'test-user'; // Fixed user ID for testing
 
   // Get feed preview for selected user segment
   const { data: feedData, isLoading: feedLoading, refetch: refetchFeed } = useQuery({
@@ -69,7 +69,7 @@ const FeedPreviewModal: React.FC<FeedPreviewModalProps> = ({
   });
 
   // Get feed analytics for the selected segment
-  const { data: analyticsData, isLoading: analyticsLoading } = useQuery({
+  const { data: analyticsData } = useQuery({
     queryKey: ['feed-analytics', selectedSegment],
     queryFn: () => feedApi.getFeedAnalytics({ segment: selectedSegment }),
     enabled: visible,
@@ -113,11 +113,11 @@ const FeedPreviewModal: React.FC<FeedPreviewModalProps> = ({
             by {content.author || 'Unknown'} • {content.type}
           </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <Tag size="small" color={content.status === 'active' ? 'green' : 'orange'}>
+            <Tag color={content.status === 'active' ? 'green' : 'orange'}>
               {content.status}
             </Tag>
             {content.category && (
-              <Tag size="small" color="blue">
+              <Tag color="blue">
                 {content.category.name?.en || content.category.category_id}
               </Tag>
             )}
